@@ -1,4 +1,4 @@
-import { signIn, signOut, useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 const ConnectTwitter = () => {
     const { data: session } = useSession();
     const xClick  = () => {
