@@ -56,7 +56,10 @@ const handler = NextAuth({
             // if (token?.sub) {
             //     session.user.id = token.sub;
             // }
-            session.user = { ...token.user };
+            console.log('---',session);
+            console.log('---',token);
+            
+            // session.user = { ...token.user };
             return session;
         },
     },
