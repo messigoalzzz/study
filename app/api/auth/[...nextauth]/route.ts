@@ -58,8 +58,11 @@ const handler = NextAuth({
             // }
             console.log('---',session);
             console.log('---',token);
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const aaa = token as any;
             
-            // session.user = { ...token.user };
+            session.user = { ...aaa.user };
             return session;
         },
     },
