@@ -61,9 +61,21 @@ const handler = NextAuth({
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const aaa = token as any;
+
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+            const data:any = {}   
+
+            if (aaa.accessToken) {
+                data.accessToken = aaa.accessToken;
+              }
             
             session.user = { ...aaa.user };
-            return session;
+
+            data.user = session.user;
+            console.log('---',data);
+
+       
+            return data;
         },
     },
 });
