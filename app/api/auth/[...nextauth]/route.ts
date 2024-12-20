@@ -5,8 +5,8 @@ const handler = NextAuth({
     session: { strategy: 'jwt' },
     providers: [
         TwitterProvider({
-            clientId: process.env.TWITTER_CLIEND_ID||'',
-            clientSecret: process.env.TWITTER_CLIEND_SECRET||'',
+            clientId: 'UXdxUjIwaXpUNU1aTkFiaENLbWE6MTpjaQ',
+            clientSecret: 'yDryAqPfmn1_whKQGIJYvAg78rJd9fw5iICcmpWee7Qw2XT5M2',
             client: {
                 httpOptions: {
                     timeout: 20000, // 若终端里有超时报错，则延长超时时间
