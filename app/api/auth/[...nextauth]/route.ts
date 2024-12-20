@@ -5,8 +5,8 @@ const handler = NextAuth({
     session: { strategy: 'jwt' },
     providers: [
         TwitterProvider({
-            clientId: 'UXdxUjIwaXpUNU1aTkFiaENLbWE6MTpjaQ',
-            clientSecret: 'yDryAqPfmn1_whKQGIJYvAg78rJd9fw5iICcmpWee7Qw2XT5M2',
+            clientId: process.env.TWITTER_CLIEND_ID||'',
+            clientSecret: process.env.TWITTER_CLIEND_SECRET||'',
             client: {
                 httpOptions: {
                     timeout: 20000, // 若终端里有超时报错，则延长超时时间
@@ -19,11 +19,14 @@ const handler = NextAuth({
                 },
             },
             profile(profile) { // 这一步是为了拿到twitter更详细的用户信息，否则下面的session只能取到name，而取不到username
+                console.log('----profile',profile);
+                
                 return {
                     id: profile.data.id,
                     name: profile.data.name,
                     screen_name: profile.data.username,
                     image: profile.data.profile_image_url,
+                    accessToken:profile.data.accessToken
                 };
             },
         }),
@@ -56,8 +59,8 @@ const handler = NextAuth({
             // if (token?.sub) {
             //     session.user.id = token.sub;
             // }
-            console.log('---',session);
-            console.log('---',token);
+            console.log('---session',session);
+            console.log('---token',token);
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const aaa = token as any;
