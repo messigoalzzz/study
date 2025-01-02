@@ -3,7 +3,7 @@ import { ActionGetResponse, createActionHeaders } from "@solana/actions";
 
 const headers = createActionHeaders();
 
-export const GET = async (req: Request) => {
+export const GET = async () => {
   try {
     const tokenId = "GcCy73QMvUoakxCecqWx3SGrrwXVRjZ7SbxYr8jz9RN5"; // 动态 Token ID
     const tokenDetailUrl = `https://moonpump.me/token/${tokenId}`; // 替换为实际的页面地址
