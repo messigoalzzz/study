@@ -24,7 +24,6 @@ const ActionsPage: React.FC = () => {
       }
     } catch (error) {
       console.error("Error generating action:", error);
-      alert(`Failed to create action. Error: ${error.message}`);
     }
   };
 
