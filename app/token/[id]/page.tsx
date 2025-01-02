@@ -10,8 +10,13 @@ export function generateMetadata() {
       card: "summary_large_image",
       title: "Token Details",
       description: "View token details",
-      images: "https://moonpump.me/image/logo.svg",
+      images: "https://static.lastshop.com/news/a1602d7fe822ab9001baab287217f3ec.png",
     },
+    og:{
+      title: "Token Details",
+      description: "View token details",
+      images: "https://static.lastshop.com/news/a1602d7fe822ab9001baab287217f3ec.png",
+    }
   };
 }
 const TokenDetailPage = () => {
