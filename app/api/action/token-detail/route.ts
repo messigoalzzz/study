@@ -9,8 +9,8 @@ export const GET = async () => {
     const tokenDetailUrl = `https://moonpump.me/token/${tokenId}`; // 替换为实际的页面地址
 
     // 模拟生成的 Action ID（可以替换为实际的生成逻辑）
-    const actionId = "sample-action-id";
-    const actionUrl = `https://dialect.to/actions/${actionId}`;
+    // const actionId = "sample-action-id";
+    const actionUrl = `https://study-virid.vercel.app/api/action/token/123`;
 
     // 定义 Action 数据
     const payload: ActionGetResponse = {
