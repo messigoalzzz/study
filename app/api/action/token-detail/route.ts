@@ -10,7 +10,7 @@ export const GET = async () => {
 
     // 模拟生成的 Action ID（可以替换为实际的生成逻辑）
     // const actionId = "sample-action-id";
-    const actionUrl = `https://study-virid.vercel.app/api/action/token/123`;
+    const actionUrl = `https://study-virid.vercel.app/token/123`;
 
     // 定义 Action 数据
     const payload: ActionGetResponse = {
