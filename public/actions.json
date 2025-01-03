@@ -2,7 +2,7 @@
   "rules": [
     {
       "pathPattern": "/token/*",
-      "apiPath": "/action/token-detail"
+      "apiPath": "/api/action/token-detail"
     }
   ]
 }
