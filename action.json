@@ -6,7 +6,7 @@
       },
       {
         "websiteUrl": "https://study-virid.vercel.app/token/456",
-        "actionUrl": "https://study-virid.vercel.app/api/action/token-detail-456"
+        "actionUrl": "https://study-virid.vercel.app/api/action/token-detail"
       }
     ]
   }
