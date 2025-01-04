@@ -33,7 +33,7 @@ export const GET = async () => {
           },
         ],
       },
-      actionUrl, // 添加 Action URL
+      // actionUrl, // 添加 Action URL
     } as ActionGetResponse & { actionUrl: string };
 
     // 返回 JSON 响应
