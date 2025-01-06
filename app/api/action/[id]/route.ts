@@ -4,6 +4,10 @@ import { ActionGetResponse, createActionHeaders } from "@solana/actions";
 const headers = createActionHeaders();
 export const GET = async (req: Request, props: { params: Promise<{ id: string }> }) => {
   const { id } = await props.params;
+  console.log('--req',req);
+  console.log('-props',props);
+  
+  
 
   // 生成动态的响应数据
   const payload: ActionGetResponse = {
