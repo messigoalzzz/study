@@ -40,14 +40,31 @@ export const GET = async (
       actions: [
         {
           type: "transaction",
-          label: "Send 1 SOL", // button text
-          href: `${baseHref}&amount=${"1"}`,
+          label: "0.1 SOL", // button text
+          href: `${baseHref}&amount=${"0.1"}`,
         },
         {
           type: "transaction",
-          label: "Send 5 SOL", // button text
-          href: `${baseHref}&amount=${"5"}`,
+          label: "0.5 SOL", // button text
+          href: `${baseHref}&amount=${"0.5"}`,
         },
+        {
+          type: "transaction",
+          label: "1 SOL", // button text
+          href: `${baseHref}&amount=${"1"}`,
+        },
+        {
+            type: 'transaction',
+            label: `Buy Token ${id}`, // button text
+            href: `${baseHref}&amount={amount}`, // this href will have a text input
+            parameters: [
+              {
+                name: 'amount', // parameter name in the `href` above
+                label: 'Enter a custom SOL amount', // placeholder of the text input
+                required: true,
+              },
+            ],
+          },
       ],
     },
   };
@@ -65,10 +82,9 @@ export const POST = async (req: Request) => {
     const requestUrl = new URL(req.url);
     const { amount, toPubkey } = validatedQueryParams(requestUrl);
 
-    console.log('----requestUrl--11', requestUrl);
-    console.log('----amount--22', amount);
-    console.log('----toPubkey--33', toPubkey);
-    
+    console.log("----requestUrl--11", requestUrl);
+    console.log("----amount--22", amount);
+    console.log("----toPubkey--33", toPubkey);
 
     const body: ActionPostRequest = await req.json();
 
@@ -84,8 +100,7 @@ export const POST = async (req: Request) => {
       });
     }
 
-    console.log('----account--44', account);
-    
+    console.log("----account--44", account);
 
     const connection = new Connection(
       process.env.SOLANA_RPC! || clusterApiUrl("mainnet-beta")
