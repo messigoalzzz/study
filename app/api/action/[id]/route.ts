@@ -39,10 +39,9 @@ export const GET = async (
     links: {
       actions: [
         {
-          type: 'external-link',
+          type: "transaction",
           label: "0.1 SOL", // button text
-          // href: `${baseHref}&amount=${"0.1"}`,
-          href:'https://www.google.com'
+          href: `${baseHref}&amount=${"0.1"}`,
         },
         {
           type: "transaction",
