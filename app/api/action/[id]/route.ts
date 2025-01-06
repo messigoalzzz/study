@@ -25,7 +25,7 @@ export const GET = async (
   const { toPubkey } = validatedQueryParams(requestUrl);
 
   const baseHref = new URL(
-    `/api/actions/donate-sol?to=${toPubkey.toBase58()}`,
+    `/api/actions/${id}?to=${toPubkey.toBase58()}`,
     requestUrl.origin
   ).toString();
 
