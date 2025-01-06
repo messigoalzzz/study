@@ -84,6 +84,9 @@ export const POST = async (req: Request) => {
       });
     }
 
+    console.log('----account--44', account);
+    
+
     const connection = new Connection(
       process.env.SOLANA_RPC! || clusterApiUrl("mainnet-beta")
     );
