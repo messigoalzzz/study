@@ -25,7 +25,7 @@ export const GET = async (
   const { toPubkey } = validatedQueryParams(requestUrl);
 
   const baseHref = new URL(
-    `/api/actions/${id}?to=${toPubkey.toBase58()}`,
+    `/api/action/${id}?to=${toPubkey.toBase58()}`,
     requestUrl.origin
   ).toString();
 
