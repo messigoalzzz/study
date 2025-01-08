@@ -187,7 +187,10 @@ function validatedQueryParams(requestUrl: URL) {
       amount = parseFloat(requestUrl.searchParams.get("amount")!);
     }
 
-    if (amount <= 0)   throw new Error("Invalid input query parameter: amount");;
+    if (amount <= 0)     return new Response('不合法笨蛋', {
+      status: 400,
+      headers,
+    });;
   } catch (err) {
     console.log("---err", err);
     //  NextResponse.json(
