@@ -164,10 +164,13 @@ export const POST = async (req: Request) => {
   } catch (err) {
     console.log(err);
     const message = "Something went wrong demo";
-    return new Response(message, {
-      status: 400,
-      headers,
-    });
+    return new Response(
+      JSON.stringify({ message }), // 包装成 JSON 格式
+      {
+        status: 400,
+        headers,
+      }
+    );
   }
 };
 
