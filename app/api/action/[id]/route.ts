@@ -22,7 +22,10 @@ export const GET = async (
   const { id } = await props.params;
 
   const requestUrl = new URL(req.url);
-  const { toPubkey } = validatedQueryParams(requestUrl);
+  const { toPubkey } = validatedQueryParams(requestUrl) as {
+    toPubkey: PublicKey;
+    amount: number;
+  };
 
   const baseHref = new URL(
     `/api/action/${id}?to=${toPubkey.toBase58()}`,
@@ -80,7 +83,10 @@ export const OPTIONS = async () => {
 export const POST = async (req: Request) => {
   try {
     const requestUrl = new URL(req.url);
-    const { amount, toPubkey } = validatedQueryParams(requestUrl);
+    const { amount, toPubkey } = validatedQueryParams(requestUrl) as {
+      toPubkey: PublicKey;
+      amount: number;
+    };
 
     console.log("----requestUrl--11", requestUrl);
     console.log("----amount--22", amount);
@@ -157,7 +163,7 @@ export const POST = async (req: Request) => {
     });
   } catch (err) {
     console.log(err);
-    let message = "An unknown error occurred";
+    let message = "Something went wrong";
     if (typeof err == "string") message = err;
     return new Response(message, {
       status: 400,
@@ -185,10 +191,15 @@ function validatedQueryParams(requestUrl: URL) {
     if (amount <= 0)   throw new Error("Invalid input query parameter: amount");;
   } catch (err) {
     console.log("---err", err);
-     NextResponse.json(
-      { error: "Invalid input query parameter", message: '哈哈哈哈' },
-      { status: 400, headers: { "Content-Type": "application/json" } }
-    );
+    //  NextResponse.json(
+    //   { error: "Invalid input query parameter", message: '哈哈哈哈' },
+    //   { status: 400, headers: { "Content-Type": "application/json" } }
+    // );
+
+    return new Response('不合法笨蛋', {
+      status: 400,
+      headers,
+    });
   }
 
   return {
