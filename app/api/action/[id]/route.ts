@@ -172,24 +172,23 @@ function validatedQueryParams(requestUrl: URL) {
   );
   let amount: number = 0.1;
 
-  try {
     if (requestUrl.searchParams.get("to")) {
       toPubkey = new PublicKey(requestUrl.searchParams.get("to")!);
     }
-  } catch (err) {
-    console.log("---err", err);
-    throw "Invalid input query parameter: to";
-  }
+
 
   try {
     if (requestUrl.searchParams.get("amount")) {
       amount = parseFloat(requestUrl.searchParams.get("amount")!);
     }
 
-    if (amount <= 0) throw "amount is too small";
+    if (amount <= 0)   throw new Error("Invalid input query parameter: amount");;
   } catch (err) {
     console.log("---err", err);
-    throw "Invalid input query parameter: amount";
+     NextResponse.json(
+      { error: "Invalid input query parameter", message: '哈哈哈哈' },
+      { status: 400, headers: { "Content-Type": "application/json" } }
+    );
   }
 
   return {
