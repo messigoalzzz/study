@@ -163,8 +163,7 @@ export const POST = async (req: Request) => {
     });
   } catch (err) {
     console.log(err);
-    let message = "Something went wrong";
-    if (typeof err == "string") message = err;
+    const message = "Something went wrong demo";
     return new Response(message, {
       status: 400,
       headers,
