@@ -4,13 +4,13 @@ export const GET = async () => {
   const payload: ActionsJson = {
     rules: [
       // map all root level routes to an action
-      {
+        {
         pathPattern: '/*',
-        apiPath: '/api/actions/*',
+        apiPath: '/api/action/*',
       },
       {
-        pathPattern: "/token/**",
-        apiPath: "/api/action/**",
+        pathPattern: "/token/*",
+        apiPath: "/api/action/*",
       },
 
       // idempotent rule as the fallback
