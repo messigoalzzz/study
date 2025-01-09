@@ -344,17 +344,17 @@
   resolved "https://registry.yarnpkg.com/@rushstack/eslint-patch/-/eslint-patch-1.10.4.tgz#427d5549943a9c6fce808e39ea64dbe60d4047f1"
   integrity sha512-WJgX9nzTqknM393q1QJDJmoW28kUfEnybeTfVNcNAPnIx210RXm2DiXiHzfNPJNIUUb1tJnz/l4QGtJ30PgWmA==
 
-"@solana/actions-spec@^2.0.0":
+"@solana/actions-spec@^2.4.1":
   version "2.4.2"
   resolved "https://registry.yarnpkg.com/@solana/actions-spec/-/actions-spec-2.4.2.tgz#686a01b48be01a5a4fd625537c7ad8a4bf534b14"
   integrity sha512-phdlA+JqIrsWw3rmhDynddv9/ZQONPqzYCpPoxN3VMR/2bECsdPWyBgLQpjqk4hgdn7VWQXWzEJtdeFMKxn78g==
 
-"@solana/actions@1.4.0":
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/@solana/actions/-/actions-1.4.0.tgz#6d473500b06dd1fb69e82211bbf4f17bb32e2469"
-  integrity sha512-X6SrWJZG3GR35ynz+EJF7L0sRWSG3UwDZSV3hQTw30c8T+zfU8NWIB22JNfZ+UfsVCAZ9RbebNj82upVafTksA==
+"@solana/actions@^1.6.6":
+  version "1.6.6"
+  resolved "https://registry.yarnpkg.com/@solana/actions/-/actions-1.6.6.tgz#0415274ffd4fb1fd50a914d85e43c69c6804d45f"
+  integrity sha512-LkXsXr2NFVgo74ZO8WS1Vli68oJhFBvr7pwh6u6Zb//HJKoG8eHIz24E7Q9gBumWRkduLcLrqtpIgL5SbfO59g==
   dependencies:
-    "@solana/actions-spec" "^2.0.0"
+    "@solana/actions-spec" "^2.4.1"
     "@solana/qr-code-styling" "^1.6.0"
     "@solana/web3.js" "^1.61.0"
     bs58 "^5.0.0"
