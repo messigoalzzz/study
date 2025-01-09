@@ -16,58 +16,44 @@ import {
 } from "@solana/web3.js";
 const headers = createActionHeaders();
 export const GET = async (
-  req: Request,
-  props: { params: Promise<{ id: string }> }
 ) => {
-  const { id } = await props.params;
+  // const { id } = await props.params;
 
-  const requestUrl = new URL(req.url);
-  const { toPubkey } = validatedQueryParams(requestUrl) as {
-    toPubkey: PublicKey;
-    amount: number;
-  };
+  // const requestUrl = new URL(req.url);
+  // const { toPubkey } = validatedQueryParams(requestUrl) as {
+  //   toPubkey: PublicKey;
+  //   amount: number;
+  // };
 
-  const baseHref = new URL(
-    `/api/action/${id}?to=${toPubkey.toBase58()}`,
-    requestUrl.origin
-  ).toString();
+  // const baseHref = new URL(
+  //   `/api/action/${id}?to=${toPubkey.toBase58()}`,
+  //   requestUrl.origin
+  // ).toString();
 
   // 生成动态的响应数据
   const payload: ActionGetResponse = {
-    type: "action",
-    title: `Buy Token ${id}`,
-    description: `Purchase token ${id}.`,
-    icon: "https://moonpump.me/image/logo.svg",
-    label: "Buy Token",
+    title: "ThreeCupsOneBall",
+    icon: "https://www.threecupsoneball.fun/start.jpg",
+    description:
+      "Done be afraid now, take a pick!Guess correctly and win a prize",
+    label: "Play!",
     links: {
       actions: [
         {
-          type: "transaction",
-          label: "0.1 SOL", // button text
-          href: `${baseHref}&amount=${"0.1"}`,
+          type: "post",
+          label: "Left",
+          href: "https://www.threecupsoneball.fun/api/actions/start_action?path1=path1/correct_action",
         },
         {
-          type: "transaction",
-          label: "0.5 SOL", // button text
-          href: `${baseHref}&amount=${"0.5"}`,
+          type: "post",
+          label: "Middle",
+          href: "https://www.threecupsoneball.fun/api/actions/start_action?path2=path1/wrong_action",
         },
         {
-          type: "transaction",
-          label: "1 SOL", // button text
-          href: `${baseHref}&amount=${"1"}`,
+          type: "post",
+          label: "Right",
+          href: "https://www.threecupsoneball.fun/api/actions/start_action?path3=path1/wrong_action",
         },
-        {
-            type: 'transaction',
-            label: `Buy Token ${id}`, // button text
-            href: `${baseHref}&amount={amount}`, // this href will have a text input
-            parameters: [
-              {
-                name: 'amount', // parameter name in the `href` above
-                label: 'Enter a custom SOL amount', // placeholder of the text input
-                required: true,
-              },
-            ],
-          },
       ],
     },
   };
@@ -180,20 +166,20 @@ function validatedQueryParams(requestUrl: URL) {
   );
   let amount: number = 0.1;
 
-    if (requestUrl.searchParams.get("to")) {
-      toPubkey = new PublicKey(requestUrl.searchParams.get("to")!);
-    }
-
+  if (requestUrl.searchParams.get("to")) {
+    toPubkey = new PublicKey(requestUrl.searchParams.get("to")!);
+  }
 
   try {
     if (requestUrl.searchParams.get("amount")) {
       amount = parseFloat(requestUrl.searchParams.get("amount")!);
     }
 
-    if (amount <= 0)     return new Response('不合法笨蛋', {
-      status: 400,
-      headers,
-    });;
+    if (amount <= 0)
+      return new Response("不合法笨蛋", {
+        status: 400,
+        headers,
+      });
   } catch (err) {
     console.log("---err", err);
     //  NextResponse.json(
@@ -201,7 +187,7 @@ function validatedQueryParams(requestUrl: URL) {
     //   { status: 400, headers: { "Content-Type": "application/json" } }
     // );
 
-    return new Response('不合法笨蛋', {
+    return new Response("不合法笨蛋", {
       status: 400,
       headers,
     });
