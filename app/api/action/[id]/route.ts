@@ -3,7 +3,7 @@ import {
   ActionGetResponse,
   ActionPostRequest,
   ActionPostResponse,
-  createActionHeaders,
+  // createActionHeaders,
   createPostResponse,
 } from "@solana/actions";
 import {
@@ -14,7 +14,7 @@ import {
   SystemProgram,
   Transaction,
 } from "@solana/web3.js";
-const headers = createActionHeaders();
+const headers = {};
 export const GET = async (
 ) => {
   // const { id } = await props.params;
