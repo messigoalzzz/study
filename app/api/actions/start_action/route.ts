@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
 
-
-export const GET = async (
-) => {
+export const GET = async () => {
   // 生成动态的响应数据
   const payload = {
     title: "ThreeCupsOneBall",
@@ -31,5 +29,21 @@ export const GET = async (
     },
   };
 
-  return NextResponse.json(payload, { status: 200 });
+  // 创建响应对象，并添加 CORS 头
+  const response = NextResponse.json(payload, { status: 200 });
+  response.headers.set("Access-Control-Allow-Origin", "*");
+  response.headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type");
+
+  return response;
+};
+
+// 确保 OPTIONS 方法支持 CORS 预检请求
+export const OPTIONS = async () => {
+  const response = new NextResponse(null, { status: 200 });
+  response.headers.set("Access-Control-Allow-Origin", "*");
+  response.headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+  response.headers.set("Access-Control-Allow-Headers", "Content-Type");
+
+  return response;
 };
