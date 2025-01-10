@@ -5,7 +5,7 @@ export const GET = async () => {
       "rules": [
         {
           "pathPattern": "/**",
-          "apiPath": "/api/actions/start_action"
+          "apiPath": "/api/action/:id"
         }
       ]
   };
