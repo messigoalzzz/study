@@ -3,7 +3,7 @@ import {
   ActionGetResponse,
   ActionPostRequest,
   ActionPostResponse,
-  // createActionHeaders,
+  createActionHeaders,
   createPostResponse,
 } from "@solana/actions";
 import {
@@ -14,7 +14,7 @@ import {
   SystemProgram,
   Transaction,
 } from "@solana/web3.js";
-const headers = {};
+const headers = createActionHeaders();
 export const GET = async (
 ) => {
   // const { id } = await props.params;
@@ -32,7 +32,7 @@ export const GET = async (
 
   // 生成动态的响应数据
   const payload: ActionGetResponse = {
-    title: "ThreeCupsOneBall-----",
+    title: "AAAAAA-----",
     icon: "https://www.threecupsoneball.fun/start.jpg",
     description:
       "Done be afraid now, take a pick!Guess correctly and win a prize",
