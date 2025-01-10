@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { ActionGetResponse, createActionHeaders } from "@solana/actions";
+import { http } from "@/lib/api";
 
 const headers = createActionHeaders();
 
@@ -8,6 +9,10 @@ export const GET = async (
   props: { params: Promise<{ id: string }> }
 ) => {
   const { id } = await props.params;
+
+  const tokenData_detail = await http.get(`/api/meme-token/${id}/detail`);
+  console.log('---tokenData_detail',tokenData_detail);
+  
 
   const tokenData = {
     tokenDetails: {
