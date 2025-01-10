@@ -16,7 +16,7 @@ export const GET = async (
       id: 976,
       token_name: "AAAAADogePaw",
       contract_address: "Hqqcxfg5ti75U4T3Vtry6Xm83A21qNCzaoHSkYiDVt1Z",
-      ticker_symbol: "DPAW",
+      ticker_symbol: "SSAAAADPAW",
       supply: 1000000000,
       market_cap: 42.5557184869,
       avaliable_buy: 589813646.493254,
