@@ -14,7 +14,7 @@ export const GET = async (
       createdAt: 1735888715806,
       updatedAt: 1736475750033,
       id: 976,
-      token_name: "DogePaw",
+      token_name: "AAAAADogePaw",
       contract_address: "Hqqcxfg5ti75U4T3Vtry6Xm83A21qNCzaoHSkYiDVt1Z",
       ticker_symbol: "DPAW",
       supply: 1000000000,

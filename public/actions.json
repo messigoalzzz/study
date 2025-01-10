@@ -1,0 +1,8 @@
+{
+    "rules": [
+      {
+        "pathPattern": "/token/*",
+        "apiPath": "/api/action/*"
+      }
+    ]
+  }
