@@ -66,7 +66,7 @@ export const GET = async (
   const tokenInfo = tokenData.tokenDetails;
 
   const baseHref = new URL(
-    `/api/actions/${id}?on_chain=${tokenInfo.on_chain}&token_name=${tokenInfo.token_name}&ticker_symbol=${tokenInfo.ticker_symbol}&metadata_uri=${tokenInfo.metadata_uri}&contract_address=${tokenInfo.contract_address}`,
+    `/api/action/${id}?on_chain=${tokenInfo.on_chain}&token_name=${tokenInfo.token_name}&ticker_symbol=${tokenInfo.ticker_symbol}&metadata_uri=${tokenInfo.metadata_uri}&contract_address=${tokenInfo.contract_address}`,
     process.env.NEXTAUTH_URL
   ).toString();
 
@@ -116,4 +116,13 @@ export const GET = async (
 // OPTIONS 路由：确保跨域支持
 export const OPTIONS = async () => {
   return new Response(null, { headers });
+};
+
+
+export const POST = async () => {
+ 
+  return new Response(JSON.stringify({ message: 'eeeee' }), {
+    status: 400,
+    headers,
+  });
 };
