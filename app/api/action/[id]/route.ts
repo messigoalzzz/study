@@ -31,7 +31,7 @@ export const GET = async () => {
   };
 
   // 创建响应对象，并添加 CORS 头
-  const response = NextResponse.json(payload, { status: 200 ,headers});
+  const response = NextResponse.json(payload, { headers});
   // response.headers.set("Access-Control-Allow-Origin", "*");
   // response.headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
   // response.headers.set("Access-Control-Allow-Headers", "Content-Type");
@@ -41,7 +41,7 @@ export const GET = async () => {
 
 // 确保 OPTIONS 方法支持 CORS 预检请求
 export const OPTIONS = async () => {
-  const response = new NextResponse(null, { status: 200,headers });
+  const response = new NextResponse(null, { headers });
   // response.headers.set("Access-Control-Allow-Origin", "*");
   // response.headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
   // response.headers.set("Access-Control-Allow-Headers", "Content-Type");
