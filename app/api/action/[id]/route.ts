@@ -58,12 +58,18 @@ export const GET = async (
     },
   };
 
-  return NextResponse.json(payload, { headers });
+  const response = NextResponse.json(payload, { status: 200 ,headers});
+  // response.headers.set("Access-Control-Allow-Origin", "*");
+  // response.headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+  // response.headers.set("Access-Control-Allow-Headers", "Content-Type");
+
+  return response;
 };
 
 // OPTIONS 路由：确保跨域支持
 export const OPTIONS = async () => {
-  return new Response(null, { headers });
+  const response = new NextResponse(null, { status: 200,headers });
+  return response;
 };
 
 export const POST = async (req: Request) => {
