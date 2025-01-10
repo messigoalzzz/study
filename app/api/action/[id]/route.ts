@@ -32,7 +32,7 @@ export const GET = async (
 
   // 生成动态的响应数据
   const payload: ActionGetResponse = {
-    title: "ThreeCupsOneBall",
+    title: "ThreeCupsOneBall-----",
     icon: "https://www.threecupsoneball.fun/start.jpg",
     description:
       "Done be afraid now, take a pick!Guess correctly and win a prize",
