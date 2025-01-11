@@ -14,7 +14,7 @@ interface CustomAxiosResponse extends AxiosResponse {
 
 
 const apiClient = axios.create({
-  baseURL: 'https://api10.test.moonpump.me',
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
   timeout: 60000,
 });
 
@@ -25,9 +25,9 @@ apiClient.interceptors.request.use((config: CustomInternalAxiosRequestConfig) =>
   
 
    if (config.url?.startsWith('/capi')) {
-    config.baseURL = 'https://api10.test.moonpump.me';  // 设置capi的baseURL
+    config.baseURL = process.env.NEXT_PUBLIC_API_JAVA_URL;  // 设置capi的baseURL
   } else if (config.url?.startsWith('/api')) {
-    config.baseURL = 'https://api10.test.moonpump.me';  // 设置api的baseURL
+    config.baseURL = process.env.NEXT_PUBLIC_API_BASE_URL;  // 设置api的baseURL
   }
   
   return config;
