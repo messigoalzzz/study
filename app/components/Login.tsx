@@ -4,7 +4,7 @@ const ConnectTwitter = () => {
     console.log('---',session);
     
     const xClick  = () => {
-        signIn('twitter');
+        signIn('twitter',{callbackUrl: "/airdrop" });
     }
     return (
         <div onClick={xClick} className='bg-black w-5 h-6'>
