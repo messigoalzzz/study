@@ -83,7 +83,7 @@ const handler = NextAuth({
         async redirect({ url, baseUrl }) {
             console.log('00url',url);
             console.log('00baseUrl',baseUrl);
-            return baseUrl
+            return url
         }
     },
 });
