@@ -1,7 +1,14 @@
 import NextAuth from 'next-auth';
 import TwitterProvider from 'next-auth/providers/twitter';
+import { NextAuthOptions } from "next-auth"
+import { NextRequest } from 'next/server';
+// const handler = NextAuth();
 
-const handler = NextAuth({
+// export { handler as GET, handler as POST };
+
+
+
+const authOptions:NextAuthOptions = {
     session: { strategy: 'jwt' },
     providers: [
         TwitterProvider({
@@ -86,7 +93,33 @@ const handler = NextAuth({
             return url
         }
     },
-});
+}
 
-export { handler as GET, handler as POST };
+const baseHandler = NextAuth(authOptions)
 
+
+/**
+ * 3. 在 GET/POST 里，先动态设置 process.env.NEXTAUTH_URL
+ *    再把 request、context 原样传给 baseHandler
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function GET(request: NextRequest, context: any) {
+    const host = request.headers.get("host") // "moonpump.ai" or "localhost:3000"
+    if (host) {
+      const protocol = host.includes("localhost") ? "http" : "https"
+      process.env.NEXTAUTH_URL = `${protocol}://${host}`
+    }
+  
+    return baseHandler(request, context)
+  }
+  
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  export async function POST(request: NextRequest, context: any) {
+    const host = request.headers.get("host")
+    if (host) {
+      const protocol = host.includes("localhost") ? "http" : "https"
+      process.env.NEXTAUTH_URL = `${protocol}://${host}`
+    }
+  
+    return baseHandler(request, context)
+  }
