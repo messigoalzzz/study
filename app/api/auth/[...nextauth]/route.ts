@@ -80,9 +80,9 @@ const handler = NextAuth({
        
             return data;
         },
-        async redirect({ url, baseUrl }) {
-            console.log('00url',url);
-            console.log('00baseUrl',baseUrl);
+        async redirect({ url }) {
+            console.log('---变量',process.env.NEXTAUTH_URL);
+            
             return url
         }
     },
