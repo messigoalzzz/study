@@ -83,16 +83,8 @@ const handler = NextAuth({
         async redirect({ url, baseUrl }) {
             console.log('00url',url);
             console.log('00baseUrl',baseUrl);
-            // 如果你想进一步限制只跳回允许的域名，可加一层判断
-            // const allowedDomains = ["https://moonpump.ai", "https://moonpump.me"]
-            // const origin = new URL(url).origin
-            // if (allowedDomains.includes(origin)) {
-            //   // 如果回调地址是在允许域名内，就用原地址
-            //   return url
-            // }
-            // 否则就回到当前的 baseUrl
             return baseUrl
-          }
+        }
     },
 });
 
