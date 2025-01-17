@@ -107,6 +107,7 @@ export async function GET(request: NextRequest, context: any) {
     const host = request.headers.get("host") // "moonpump.ai" or "localhost:3000"
     if (host) {
       const protocol = host.includes("localhost") ? "http" : "https"
+      console.log('--host',host);
       process.env.NEXTAUTH_URL = `${protocol}://${host}`
     }
   
@@ -118,6 +119,8 @@ export async function GET(request: NextRequest, context: any) {
     const host = request.headers.get("host")
     if (host) {
       const protocol = host.includes("localhost") ? "http" : "https"
+      console.log('--host',host);
+      
       process.env.NEXTAUTH_URL = `${protocol}://${host}`
     }
   
