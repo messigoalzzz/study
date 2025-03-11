@@ -1,14 +1,18 @@
 
 'use client';
 import { SessionProvider } from 'next-auth/react';
+import dynamic from 'next/dynamic';
+import ClientWalletProvider from '../providers/WalletProvider';
 
-import Login from '@/app/components/Login'
- function Home() {
+const AirdropTasks = dynamic(
+  () => import('@/app/components/AirdropTasks'),
+  { ssr: false }
+);
+
+function Home() {
   return (
-    <div className="flex justify-center items-center h-screen bg-blue-500">
-      <span>testAirdrop</span>
-
-      <Login/>
+    <div className="min-h-screen bg-gray-100 py-12">
+      <AirdropTasks />
     </div>
   );
 }
@@ -18,8 +22,9 @@ export default function Page() {
   return (
     <div>
       <SessionProvider>
-      <Home/>
-
+        <ClientWalletProvider>
+          <Home/>
+        </ClientWalletProvider>
       </SessionProvider>
     </div>
   );
