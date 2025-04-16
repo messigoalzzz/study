@@ -15,10 +15,12 @@
     "@solana/wallet-adapter-react-ui": "^0.9.35",
     "@solana/wallet-adapter-wallets": "^0.19.32",
     "@solana/web3.js": "^1.98.0",
+    "@types/react-beautiful-dnd": "^13.1.8",
     "axios": "^1.7.9",
     "next": "^15.2.1",
     "next-auth": "^4.24.11",
     "react": "19.0.0-rc-66855b96-20241106",
+    "react-beautiful-dnd": "^13.1.1",
     "react-dom": "19.0.0-rc-66855b96-20241106"
   },
   "devDependencies": {
