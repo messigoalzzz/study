@@ -50,6 +50,12 @@ function Home() {
       <div className="flex justify-center items-center bg-red-600 p-4">
         <span>test333</span>
         <Login/>
+        <span onClick={()=>{
+          const finalCallbackUrl = window.location.href;
+          const telegramAuthUrl = `/api/auth/telegram/authorize?callbackUrl=${encodeURIComponent(finalCallbackUrl)}`;
+          console.log(`📱 使用自定义流程处理 Telegram 授权:`, telegramAuthUrl);
+          window.location.href = telegramAuthUrl;
+        }} className='text-white'>TG</span>
       </div>
       <ResizableTable<StockData>
         columns={columns}
