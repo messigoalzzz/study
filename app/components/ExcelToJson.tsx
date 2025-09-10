@@ -13,6 +13,7 @@ const ExcelToJson: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>('')
   const [fileName, setFileName] = useState<string>('')
+  const [copiedRows, setCopiedRows] = useState<Set<number>>(new Set())
 
   // 拆分福利待遇字段的函数，与Python版本保持一致
   const splitBenefits = (val: unknown): string[] => {
@@ -30,6 +31,7 @@ const ExcelToJson: React.FC = () => {
     setLoading(true)
     setError('')
     setFileName(file.name)
+    setCopiedRows(new Set()) // 重置复制状态
 
     const reader = new FileReader()
     reader.onload = (e) => {
@@ -89,39 +91,41 @@ const ExcelToJson: React.FC = () => {
   })
 
   // 下载JSON文件
-  const downloadJson = () => {
-    if (!jsonData) return
+  // const downloadJson = () => {
+  //   if (!jsonData) return
     
-    const dataStr = JSON.stringify(jsonData, null, 2)
-    const dataBlob = new Blob([dataStr], { type: 'application/json' })
-    const url = URL.createObjectURL(dataBlob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${fileName.replace(/\.[^/.]+$/, '')}.json`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
-  }
+  //   const dataStr = JSON.stringify(jsonData, null, 2)
+  //   const dataBlob = new Blob([dataStr], { type: 'application/json' })
+  //   const url = URL.createObjectURL(dataBlob)
+  //   const link = document.createElement('a')
+  //   link.href = url
+  //   link.download = `${fileName.replace(/\.[^/.]+$/, '')}.json`
+  //   document.body.appendChild(link)
+  //   link.click()
+  //   document.body.removeChild(link)
+  //   URL.revokeObjectURL(url)
+  // }
 
   // 复制单行JSON数据到剪贴板
-  const copyRowJson = async (rowData: ExcelData) => {
+  const copyRowJson = async (rowData: ExcelData, rowIndex: number) => {
     const jsonStr = JSON.stringify(rowData, null, 2)
     
     try {
       // 优先使用现代的 Clipboard API
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(jsonStr)
+        // 标记该行为已复制
+        setCopiedRows(prev => new Set([...prev, rowIndex]))
         showCopySuccess()
       } else {
         // 备用方法：使用传统的 execCommand
-        fallbackCopyToClipboard(jsonStr)
+        fallbackCopyToClipboard(jsonStr, rowIndex)
       }
     } catch (err) {
       console.error('复制失败:', err)
       // 如果现代API失败，尝试备用方法
       try {
-        fallbackCopyToClipboard(jsonStr)
+        fallbackCopyToClipboard(jsonStr, rowIndex)
       } catch (fallbackErr) {
         console.error('备用复制方法也失败:', fallbackErr)
         // 最后的备用方案：显示文本让用户手动复制
@@ -131,7 +135,7 @@ const ExcelToJson: React.FC = () => {
   }
 
   // 备用复制方法
-  const fallbackCopyToClipboard = (text: string) => {
+  const fallbackCopyToClipboard = (text: string, rowIndex: number) => {
     const textArea = document.createElement('textarea')
     textArea.value = text
     textArea.style.position = 'fixed'
@@ -145,6 +149,8 @@ const ExcelToJson: React.FC = () => {
     document.body.removeChild(textArea)
     
     if (successful) {
+      // 标记该行为已复制
+      setCopiedRows(prev => new Set([...prev, rowIndex]))
       showCopySuccess()
     } else {
       throw new Error('execCommand copy failed')
@@ -158,25 +164,28 @@ const ExcelToJson: React.FC = () => {
     toast.textContent = '✅ 复制成功!'
     toast.style.cssText = `
       position: fixed;
-      top: 20px;
-      right: 20px;
+      top: 12%;
+      left: 50%;
+      transform: translateX(-50%);
       background: #10b981;
       color: white;
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 500;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
       z-index: 10000;
       transition: all 0.3s ease;
+      border: 2px solid #059669;
+      pointer-events: none;
     `
     
     document.body.appendChild(toast)
     
-    // 3秒后自动消失
+    // 2秒后自动消失
     setTimeout(() => {
       toast.style.opacity = '0'
-      toast.style.transform = 'translateX(100%)'
+      toast.style.transform = 'translateX(-50%) translateY(-20px) scale(0.98)'
       setTimeout(() => {
         if (document.body.contains(toast)) {
           document.body.removeChild(toast)
@@ -206,11 +215,33 @@ const ExcelToJson: React.FC = () => {
     return '未知公司'
   }
 
+  // 获取统一社会信用代码
+  const getCreditCode = (rowData: ExcelData): string => {
+    const possibleFields = ['统一社会信用代码', '信用代码', '社会信用代码', '信用代码', 'code', 'credit_code']
+    for (const field of possibleFields) {
+      if (rowData[field] && String(rowData[field]).trim()) {
+        return String(rowData[field]).trim()
+      }
+    }
+    return '-'
+  }
+
+  // 获取bossurl
+  const getBossUrl = (rowData: ExcelData): string => {
+    const possibleFields = ['bossurl', 'boss_url', 'boss链接', 'boss地址', 'url', '链接']
+    for (const field of possibleFields) {
+      if (rowData[field] && String(rowData[field]).trim()) {
+        return String(rowData[field]).trim()
+      }
+    }
+    return '-'
+  }
+
   return (
     <div className="max-w-6xl mx-auto p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Excel 转 JSON 工具</h1>
-        <p className="text-gray-600">支持拖拽上传Excel文件，自动处理福利待遇字段转数组</p>
+        <p className="text-gray-600">支持拖拽上传Excel文件，加油🤯</p>
       </div>
 
       {/* 文件上传区域 */}
@@ -270,48 +301,124 @@ const ExcelToJson: React.FC = () => {
       {jsonData && (
         <div className="mt-8">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">生成的JSON数据</h2>
-            <button
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-3">
+              {fileName && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-yellow-100 text-yellow-800 ring-1 ring-yellow-300 shadow">
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6M9 8h.01M7 4h7a2 2 0 011.414.586l3 3A2 2 0 0119 9v9a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                  </svg>
+                  {fileName.replace(/\.[^/.]+$/, '')}
+                </span>
+              )}
+              {/* <span>生成的JSON数据</span> */}
+            </h2>
+            {/* <button
               onClick={downloadJson}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              className="px-1 py-1 bg-black/50 text-white rounded-md hover:bg-black/20 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               下载完整JSON
-            </button>
+            </button> */}
           </div>
           
-          {/* 按行显示数据 */}
-          <div className="space-y-4">
-            {jsonData.map((rowData, index) => {
-              const companyName = getCompanyName(rowData)
-              return (
-                <div key={index} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center gap-3">
-                      <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
-                        #{index + 1}
-                      </span>
-                      <h3 className="text-lg font-medium text-gray-900">
-                        {companyName}
-                      </h3>
-                    </div>
-                    <button
-                      onClick={() => copyRowJson(rowData)}
-                      className="px-3 py-1 bg-gray-600 text-white text-sm rounded hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors"
-                    >
-                      复制
-                    </button>
-                  </div>
-                  <div className="bg-gray-50 border border-gray-200 rounded p-3 overflow-auto max-h-64">
-                    <pre className="text-sm text-gray-800 whitespace-pre-wrap">
-                      {JSON.stringify(rowData, null, 2)}
-                    </pre>
-                  </div>
-                </div>
-              )
-            })}
+          {/* 表格显示数据 */}
+          <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      序号
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      公司名称
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      统一社会信用代码
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      BossURL
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      操作
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {jsonData.map((rowData, index) => {
+                    const companyName = getCompanyName(rowData)
+                    const creditCode = getCreditCode(rowData)
+                    const bossUrl = getBossUrl(rowData)
+                    
+                    const isCopied = copiedRows.has(index)
+                    
+                    return (
+                      <tr key={index} className={`transition-colors ${isCopied ? 'bg-green-50' : 'hover:bg-gray-50'}`}>
+                        <td className={`px-6 py-4 whitespace-nowrap text-sm text-gray-900 ${isCopied ? 'border-l-4 border-green-400' : ''}`}>
+                          <span className={`text-xs font-medium px-2.5 py-0.5 rounded ${isCopied ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                            #{index + 1}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
+                          <div className="truncate" title={companyName}>
+                            {companyName}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
+                          <div className="truncate font-mono text-xs" title={creditCode}>
+                            {creditCode}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900 max-w-xs">
+                          <div className="truncate" title={bossUrl}>
+                            {bossUrl !== '-' ? (
+                              <a 
+                                href={bossUrl} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-800 hover:underline"
+                              >
+                                {bossUrl}
+                              </a>
+                            ) : (
+                              <span className="text-gray-400">{bossUrl}</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-center">
+                          <button
+                            onClick={() => copyRowJson(rowData, index)}
+                            className={`inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 transform ${
+                              isCopied 
+                                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 hover:scale-105 focus:ring-green-500' 
+                                : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:scale-105 focus:ring-blue-500'
+                            }`}
+                          >
+                            {isCopied ? (
+                              <>
+                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                已复制
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                </svg>
+                                复制JSON
+                              </>
+                            )}
+                          </button>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
             
-            <div className="mt-4 text-center">
-              <p className="text-sm text-gray-600">
+            <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
+              <p className="text-sm text-gray-600 text-center">
                 共 {jsonData.length} 条记录
               </p>
             </div>
