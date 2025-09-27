@@ -1,27 +1,14 @@
 'use client'
 import { useEffect, useState } from 'react'
 
-const INAPP_UA = /(FBAN|FBAV|Instagram|Line|MicroMessenger|WeChat|Weibo|QQ|Discord)/i
-
-export const env = {
-  isStandalone: (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || !!(navigator as { standalone?: boolean }).standalone,
-  likelyInAppUA: INAPP_UA.test(navigator.userAgent),
-  likelyWKBridge: !!(window as { webkit?: { messageHandlers?: unknown } }).webkit?.messageHandlers, // 启发式
-}
-
-export const caps = {
-  share: !!navigator.share,
-  clipboardWrite: !!navigator.clipboard?.writeText,
-}
-
-export const isConstrained = !env.isStandalone && (env.likelyInAppUA || env.likelyWKBridge)
+// 将检测逻辑移到组件内部以避免 Next.js 导出错误
 
 interface DebugInfo {
   href: string
   ua: string
   isStandalone: boolean
-  likelyInAppUA: boolean
-  likelyWKBridge: boolean
+  hasWKBridge: boolean
+  inAppUA: boolean
   isConstrained: boolean
   shareSupport: boolean
   clipboardSupport: boolean
@@ -34,15 +21,27 @@ const Login = () => {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
+    // 使用你提供的新检测逻辑
+    const isStandalone =
+      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+      (navigator as { standalone?: boolean }).standalone === true;     // 仅 PWA 安装后为 true
+
+    const hasWKBridge = !!(window as { webkit?: { messageHandlers?: unknown } }).webkit?.messageHandlers; // 许多 WKWebView 会暴露
+    
+    const inAppUA = /(FBAN|FBAV|Instagram|MicroMessenger|WeChat|Weibo|QQ|Discord)/i
+      .test(navigator.userAgent); // 仅作提示；很多 App 并不写 UA 标记
+
+    const isConstrained = !isStandalone && (hasWKBridge || inAppUA);
+
     const info: DebugInfo = {
       href: location.href,
       ua: navigator.userAgent,
-      isStandalone: env.isStandalone,
-      likelyInAppUA: env.likelyInAppUA,
-      likelyWKBridge: env.likelyWKBridge,
+      isStandalone,
+      hasWKBridge,
+      inAppUA,
       isConstrained,
-      shareSupport: caps.share,
-      clipboardSupport: caps.clipboardWrite,
+      shareSupport: !!navigator.share,
+      clipboardSupport: !!navigator.clipboard?.writeText,
       referrer: document.referrer || '(empty)'
     }
 
@@ -66,7 +65,7 @@ const Login = () => {
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
       {/* 受限环境提示 */}
-      {isConstrained && (
+      {debugInfo?.isConstrained && (
         <div style={{
           backgroundColor: '#ff4444',
           color: 'white',
@@ -90,7 +89,7 @@ const Login = () => {
             marginBottom: '10px', 
             textAlign: 'center' 
           }}>
-            浏览器环境检测结果 (简化版)
+            浏览器环境检测结果 (新逻辑)
           </div>
           <div
             style={{
@@ -111,22 +110,25 @@ const Login = () => {
                 User Agent: {debugInfo.ua}
               </span>
               
-              <span style={{ fontSize: '14px', fontWeight: '600', color: 'orange', marginTop: '12px' }}>环境检测:</span>
+              <span style={{ fontSize: '14px', fontWeight: '600', color: 'orange', marginTop: '12px' }}>环境检测 (新逻辑):</span>
               <span style={{ fontSize: '12px', color: debugInfo.isStandalone ? 'lime' : 'gray', fontFamily: 'monospace' }}>
-                Is Standalone: {debugInfo.isStandalone ? '✅ YES (独立应用)' : '❌ NO (浏览器内)'}
+                Is Standalone: {debugInfo.isStandalone ? '✅ YES (PWA独立模式)' : '❌ NO (浏览器内)'}
               </span>
-              <span style={{ fontSize: '12px', color: debugInfo.likelyInAppUA ? 'red' : 'lime', fontFamily: 'monospace' }}>
-                In-App Browser UA: {debugInfo.likelyInAppUA ? '🚨 YES (内嵌浏览器)' : '✅ NO (原生浏览器)'}
+              <span style={{ fontSize: '12px', color: debugInfo.hasWKBridge ? 'red' : 'lime', fontFamily: 'monospace' }}>
+                Has WK Bridge: {debugInfo.hasWKBridge ? '🚨 YES (WKWebView内嵌)' : '✅ NO (非WKWebView)'}
               </span>
-              <span style={{ fontSize: '12px', color: debugInfo.likelyWKBridge ? 'red' : 'lime', fontFamily: 'monospace' }}>
-                WK Bridge Detected: {debugInfo.likelyWKBridge ? '🚨 YES (WebKit内嵌)' : '✅ NO (非内嵌)'}
+              <span style={{ fontSize: '12px', color: debugInfo.inAppUA ? 'red' : 'lime', fontFamily: 'monospace' }}>
+                In-App UA Detected: {debugInfo.inAppUA ? '🚨 YES (内嵌浏览器UA)' : '✅ NO (原生浏览器UA)'}
               </span>
               
               <span style={{ fontSize: '14px', fontWeight: '600', color: debugInfo.isConstrained ? 'red' : 'lime', marginTop: '12px' }}>
-                总体判断:
+                最终判断:
               </span>
               <span style={{ fontSize: '12px', color: debugInfo.isConstrained ? 'red' : 'lime', fontFamily: 'monospace' }}>
                 Environment Constrained: {debugInfo.isConstrained ? '🚨 YES (受限环境)' : '✅ NO (正常环境)'}
+              </span>
+              <span style={{ fontSize: '10px', color: 'gray', fontFamily: 'monospace', marginTop: '4px' }}>
+                算法: !isStandalone && (hasWKBridge || inAppUA)
               </span>
               
               <span style={{ fontSize: '14px', fontWeight: '600', color: 'cyan', marginTop: '12px' }}>API支持:</span>
