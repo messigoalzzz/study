@@ -1,27 +1,31 @@
 'use client'
 import { useEffect, useState } from 'react'
 
+const INAPP_UA = /(FBAN|FBAV|Instagram|Line|MicroMessenger|WeChat|Weibo|QQ|Discord)/i
+
+export const env = {
+  isStandalone: (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || !!(navigator as { standalone?: boolean }).standalone,
+  likelyInAppUA: INAPP_UA.test(navigator.userAgent),
+  likelyWKBridge: !!(window as { webkit?: { messageHandlers?: unknown } }).webkit?.messageHandlers, // 启发式
+}
+
+export const caps = {
+  share: !!navigator.share,
+  clipboardWrite: !!navigator.clipboard?.writeText,
+}
+
+export const isConstrained = !env.isStandalone && (env.likelyInAppUA || env.likelyWKBridge)
+
 interface DebugInfo {
   href: string
   ua: string
-  platform: string
-  vendor: string
-  language: string
-  languages: readonly string[]
-  maxTouchPoints: number
-  isIOS: boolean
-  isSafariFamily: boolean
-  hasSafariObj: boolean
-  hasSafariPush: boolean
-  hasStandaloneProp: boolean
-  standaloneVal: boolean | string | undefined
-  isLikelySFVC: boolean
+  isStandalone: boolean
+  likelyInAppUA: boolean
+  likelyWKBridge: boolean
+  isConstrained: boolean
+  shareSupport: boolean
+  clipboardSupport: boolean
   referrer: string
-  isAndroidDiscordReferrer: boolean
-  hasShareAPI: boolean
-  hasClipboardAPI: boolean
-  userAgentData: unknown
-  matchDisplayStandalone: boolean
 }
 
 const Login = () => {
@@ -29,81 +33,22 @@ const Login = () => {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-  
-    const ua = navigator.userAgent
-    const isIOS =
-      /iPhone|iPad|iPod/i.test(ua) ||
-      (ua.includes('Macintosh') && navigator.maxTouchPoints > 1)
-  
-    const isSafariFamily =
-      /Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua)
-  
-    // 关键点：在 iOS 的 SFVC/WKWebView 里，navigator.standalone 通常是 undefined
-    const hasStandaloneProp = 'standalone' in navigator
-    const standaloneVal = hasStandaloneProp ? (navigator as { standalone?: boolean }).standalone : 'undefined'
-  
-    const isLikelySFVC = isIOS && isSafariFamily && !hasStandaloneProp
-  
-    const info = {
-      // 基本信息
+
+    const info: DebugInfo = {
       href: location.href,
-      ua,
-      platform: navigator.platform,
-      vendor: navigator.vendor,
-      language: navigator.language,
-      languages: navigator.languages,
-      maxTouchPoints: navigator.maxTouchPoints,
-
-      // iOS/Safari 家族识别
-      isIOS,
-      isSafariFamily,                 // Safari(含 SFVC) 为 true；iOS Chrome/Firefox/Edge 为 false
-      
-      // 关键：Safari对象检测 - 区分Safari App与内嵌页的关键
-      hasSafariObj: typeof (window as { safari?: { pushNotification?: unknown } }).safari !== 'undefined',
-      hasSafariPush: !!(window as { safari?: { pushNotification?: unknown } }).safari?.pushNotification, // Safari App 才有
-      
-      hasStandaloneProp,              // Safari App/PWA 存在；SFVC/WKWebView 通常不存在
-      standaloneVal,                  // PWA 独立模式为 true；Safari App 为 false
-
-      // iOS 内嵌页（SFVC）概率判断
-      isLikelySFVC,                   // 这个为 true 时，大概率就是 Discord/Telegram 等内置打开
-
-      // 可能的来源线索（Android 才更有用）
-      referrer: document.referrer || '(empty)',
-      isAndroidDiscordReferrer:
-        document.referrer.startsWith('android-app://') &&
-        document.referrer.includes('com.discord'),
-
-      // 其它能力（看差异，不用于强识别）
-      hasShareAPI: !!navigator.share,
-      hasClipboardAPI: !!navigator.clipboard,
-      userAgentData: (navigator as { userAgentData?: unknown }).userAgentData || '(none)',
-      matchDisplayStandalone: window.matchMedia('(display-mode: standalone)').matches
-    }
-  
-    console.table(info)
-    // 方便你在控制台继续玩
-    ;(window as { __envInfo?: DebugInfo }).__envInfo = info
-
-    // 额外的简化版调试输出
-    const dump = {
-      ua,
-      isIOS: /iPhone|iPad|iPod/i.test(ua) || (ua.includes('Macintosh') && navigator.maxTouchPoints > 1),
-      isSafariFamily: /Safari\//.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua),
-
-      // 这两项是区分 Safari App 与内嵌页的关键
-      hasSafariObj: typeof (window as { safari?: { pushNotification?: unknown } }).safari !== 'undefined',
-      hasSafariPush: !!(window as { safari?: { pushNotification?: unknown } }).safari?.pushNotification, // Safari App 才有
-
-      // 注意分别看"是否存在属性"和"属性值"
-      hasStandaloneProp: 'standalone' in navigator,
-      standaloneVal: (navigator as { standalone?: boolean }).standalone, // true/false/undefined
-
+      ua: navigator.userAgent,
+      isStandalone: env.isStandalone,
+      likelyInAppUA: env.likelyInAppUA,
+      likelyWKBridge: env.likelyWKBridge,
+      isConstrained,
+      shareSupport: caps.share,
+      clipboardSupport: caps.clipboardWrite,
       referrer: document.referrer || '(empty)'
     }
 
-    console.table(dump)
-    ;(window as { __env?: typeof dump }).__env = dump
+    console.table(info)
+    // 方便你在控制台继续玩
+    ;(window as { __envInfo?: DebugInfo }).__envInfo = info
 
     // 设置调试信息到state，在页面上显示
     setDebugInfo(info)
@@ -120,6 +65,21 @@ const Login = () => {
 
   return (
     <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+      {/* 受限环境提示 */}
+      {isConstrained && (
+        <div style={{
+          backgroundColor: '#ff4444',
+          color: 'white',
+          padding: '12px',
+          borderRadius: '8px',
+          marginBottom: '20px',
+          textAlign: 'center',
+          fontWeight: '600'
+        }}>
+          🚨 检测到内置浏览器环境，功能可能受限，建议在 Safari 中打开
+        </div>
+      )}
+
       {/* 调试信息显示区域 */}
       {debugInfo && (
         <div style={{ width: '100%', maxWidth: '800px', marginBottom: '20px' }}>
@@ -130,7 +90,7 @@ const Login = () => {
             marginBottom: '10px', 
             textAlign: 'center' 
           }}>
-            浏览器环境检测结果
+            浏览器环境检测结果 (简化版)
           </div>
           <div
             style={{
@@ -147,70 +107,39 @@ const Login = () => {
               <span style={{ fontSize: '12px', color: 'white', fontFamily: 'monospace' }}>
                 URL: {debugInfo.href}
               </span>
-              <span style={{ fontSize: '12px', color: 'white', fontFamily: 'monospace' }}>
-                Platform: {debugInfo.platform}
-              </span>
-              <span style={{ fontSize: '12px', color: 'white', fontFamily: 'monospace' }}>
-                Vendor: {debugInfo.vendor}
-              </span>
-              <span style={{ fontSize: '12px', color: 'white', fontFamily: 'monospace' }}>
-                Language: {debugInfo.language}
-              </span>
-              <span style={{ fontSize: '12px', color: 'white', fontFamily: 'monospace' }}>
-                Max Touch Points: {debugInfo.maxTouchPoints}
+              <span style={{ fontSize: '12px', color: 'white', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                User Agent: {debugInfo.ua}
               </span>
               
-              <span style={{ fontSize: '14px', fontWeight: '600', color: 'cyan', marginTop: '12px' }}>设备识别:</span>
-              <span style={{ fontSize: '12px', color: debugInfo.isIOS ? 'lime' : 'gray', fontFamily: 'monospace' }}>
-                Is iOS: {debugInfo.isIOS ? '✅ YES' : '❌ NO'}
+              <span style={{ fontSize: '14px', fontWeight: '600', color: 'orange', marginTop: '12px' }}>环境检测:</span>
+              <span style={{ fontSize: '12px', color: debugInfo.isStandalone ? 'lime' : 'gray', fontFamily: 'monospace' }}>
+                Is Standalone: {debugInfo.isStandalone ? '✅ YES (独立应用)' : '❌ NO (浏览器内)'}
               </span>
-              <span style={{ fontSize: '12px', color: debugInfo.isSafariFamily ? 'lime' : 'gray', fontFamily: 'monospace' }}>
-                Is Safari Family: {debugInfo.isSafariFamily ? '✅ YES' : '❌ NO'}
+              <span style={{ fontSize: '12px', color: debugInfo.likelyInAppUA ? 'red' : 'lime', fontFamily: 'monospace' }}>
+                In-App Browser UA: {debugInfo.likelyInAppUA ? '🚨 YES (内嵌浏览器)' : '✅ NO (原生浏览器)'}
               </span>
-              
-              <span style={{ fontSize: '14px', fontWeight: '600', color: 'orange', marginTop: '12px' }}>Safari对象检测 (关键区分):</span>
-              <span style={{ fontSize: '12px', color: debugInfo.hasSafariObj ? 'lime' : 'red', fontFamily: 'monospace' }}>
-                Has Safari Object: {debugInfo.hasSafariObj ? '✅ YES (真Safari)' : '🚨 NO (可能内嵌)'}
-              </span>
-              <span style={{ fontSize: '12px', color: debugInfo.hasSafariPush ? 'lime' : 'red', fontFamily: 'monospace' }}>
-                Has Safari Push: {debugInfo.hasSafariPush ? '✅ YES (Safari App)' : '🚨 NO (非Safari App)'}
+              <span style={{ fontSize: '12px', color: debugInfo.likelyWKBridge ? 'red' : 'lime', fontFamily: 'monospace' }}>
+                WK Bridge Detected: {debugInfo.likelyWKBridge ? '🚨 YES (WebKit内嵌)' : '✅ NO (非内嵌)'}
               </span>
               
-              <span style={{ fontSize: '14px', fontWeight: '600', color: 'cyan', marginTop: '12px' }}>Standalone检测:</span>
-              <span style={{ fontSize: '12px', color: debugInfo.hasStandaloneProp ? 'lime' : 'gray', fontFamily: 'monospace' }}>
-                Has Standalone Prop: {debugInfo.hasStandaloneProp ? '✅ YES' : '❌ NO'}
+              <span style={{ fontSize: '14px', fontWeight: '600', color: debugInfo.isConstrained ? 'red' : 'lime', marginTop: '12px' }}>
+                总体判断:
               </span>
-              <span style={{ fontSize: '12px', color: 'white', fontFamily: 'monospace' }}>
-                Standalone Value: {String(debugInfo.standaloneVal)}
+              <span style={{ fontSize: '12px', color: debugInfo.isConstrained ? 'red' : 'lime', fontFamily: 'monospace' }}>
+                Environment Constrained: {debugInfo.isConstrained ? '🚨 YES (受限环境)' : '✅ NO (正常环境)'}
               </span>
               
-              <span style={{ fontSize: '14px', fontWeight: '600', color: 'orange', marginTop: '12px' }}>关键判断:</span>
-              <span style={{ fontSize: '12px', color: debugInfo.isLikelySFVC ? 'red' : 'lime', fontFamily: 'monospace' }}>
-                Is Likely SFVC (内嵌浏览器): {debugInfo.isLikelySFVC ? '🚨 YES (可能是Discord等内嵌)' : '✅ NO (独立浏览器)'}
+              <span style={{ fontSize: '14px', fontWeight: '600', color: 'cyan', marginTop: '12px' }}>API支持:</span>
+              <span style={{ fontSize: '12px', color: debugInfo.shareSupport ? 'lime' : 'gray', fontFamily: 'monospace' }}>
+                Share API: {debugInfo.shareSupport ? '✅ YES' : '❌ NO'}
+              </span>
+              <span style={{ fontSize: '12px', color: debugInfo.clipboardSupport ? 'lime' : 'gray', fontFamily: 'monospace' }}>
+                Clipboard Write: {debugInfo.clipboardSupport ? '✅ YES' : '❌ NO'}
               </span>
               
               <span style={{ fontSize: '14px', fontWeight: '600', color: 'cyan', marginTop: '12px' }}>来源信息:</span>
               <span style={{ fontSize: '12px', color: 'white', fontFamily: 'monospace' }}>
                 Referrer: {debugInfo.referrer}
-              </span>
-              <span style={{ fontSize: '12px', color: debugInfo.isAndroidDiscordReferrer ? 'red' : 'gray', fontFamily: 'monospace' }}>
-                Android Discord Referrer: {debugInfo.isAndroidDiscordReferrer ? '🚨 YES' : '❌ NO'}
-              </span>
-              
-              <span style={{ fontSize: '14px', fontWeight: '600', color: 'cyan', marginTop: '12px' }}>API支持:</span>
-              <span style={{ fontSize: '12px', color: debugInfo.hasShareAPI ? 'lime' : 'gray', fontFamily: 'monospace' }}>
-                Share API: {debugInfo.hasShareAPI ? '✅ YES' : '❌ NO'}
-              </span>
-              <span style={{ fontSize: '12px', color: debugInfo.hasClipboardAPI ? 'lime' : 'gray', fontFamily: 'monospace' }}>
-                Clipboard API: {debugInfo.hasClipboardAPI ? '✅ YES' : '❌ NO'}
-              </span>
-              <span style={{ fontSize: '12px', color: debugInfo.matchDisplayStandalone ? 'lime' : 'gray', fontFamily: 'monospace' }}>
-                Display Standalone: {debugInfo.matchDisplayStandalone ? '✅ YES' : '❌ NO'}
-              </span>
-              
-              <span style={{ fontSize: '14px', fontWeight: '600', color: 'cyan', marginTop: '12px' }}>User Agent:</span>
-              <span style={{ fontSize: '12px', color: 'white', fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                {debugInfo.ua}
               </span>
             </div>
           </div>
