@@ -9,14 +9,14 @@ const execAsync = promisify(exec);
 export async function GET() {
   try {
     // 获取 Python 脚本的绝对路径
-    const scriptPath = path.join(process.cwd(), "a.py");
+    const scriptPath = path.join(process.cwd(), "scripts", "generate-tron-wallet.py");
     
     // 检查脚本文件是否存在
     if (!existsSync(scriptPath)) {
       return NextResponse.json(
         {
           success: false,
-          error: "Python script not found. Please ensure a.py exists in the project root.",
+          error: "Python script not found. Please ensure scripts/generate-tron-wallet.py exists.",
         },
         { status: 404 }
       );
