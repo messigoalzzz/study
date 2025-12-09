@@ -4,6 +4,8 @@ import { NextAuthOptions } from "next-auth"
 import { NextRequest } from 'next/server';
 // const handler = NextAuth();
 console.log(1);
+console.log(2);
+
 
 
 // export { handler as GET, handler as POST };
