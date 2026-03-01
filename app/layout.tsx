@@ -50,18 +50,18 @@ export async function generateMetadata(): Promise<Metadata> {
       type: 'website',
       siteName: seoContent.title || 'Tron 钱包生成器',
     },
-    twitter: {
-      card: seoContent.twitterCard || 'summary_large_image',
-      title: seoContent.twitterTitle || seoContent.ogTitle || seoContent.title,
-      description: seoContent.twitterDescription || seoContent.ogDescription || seoContent.description,
-      images: seoContent.twitterImage || seoContent.ogImage 
-        ? [
-            (seoContent.twitterImage || seoContent.ogImage)?.startsWith('http')
-              ? (seoContent.twitterImage || seoContent.ogImage)
-              : `${baseUrl}${seoContent.twitterImage || seoContent.ogImage}`
-          ]
-        : [],
-    },
+    // twitter: {
+    //   card: seoContent.twitterCard || 'summary_large_image',
+    //   title: seoContent.twitterTitle || seoContent.ogTitle || seoContent.title,
+    //   description: seoContent.twitterDescription || seoContent.ogDescription || seoContent.description,
+    //   images: seoContent.twitterImage || seoContent.ogImage 
+    //     ? [
+    //         (seoContent.twitterImage || seoContent.ogImage)?.startsWith('http')
+    //           ? (seoContent.twitterImage || seoContent.ogImage)
+    //           : `${baseUrl}${seoContent.twitterImage || seoContent.ogImage}`
+    //       ]
+    //     : [],
+    // },
     // 添加其他 meta 标签
     metadataBase: new URL(baseUrl),
     alternates: {
