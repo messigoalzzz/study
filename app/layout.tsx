@@ -30,8 +30,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const ogUrl = `${baseUrl}?v=${versionParam}`;
 
   return {
-    title: seoContent.title || 'Tron 钱包生成器',
-    description: seoContent.description || '安全、快速的 Tron 钱包生成工具',
+    title: seoContent.title || '工资流水模拟器',
+    description: seoContent.description || '按工资、时间范围和发薪日生成工资流水数组',
     keywords: seoContent.keywords,
     openGraph: {
       title: seoContent.ogTitle || seoContent.title,
@@ -48,7 +48,7 @@ export async function generateMetadata(): Promise<Metadata> {
         }
       ] : [],
       type: 'website',
-      siteName: seoContent.title || 'Tron 钱包生成器',
+      siteName: seoContent.title || '工资流水模拟器',
     },
     // twitter: {
     //   card: seoContent.twitterCard || 'summary_large_image',

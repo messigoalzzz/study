@@ -30,16 +30,16 @@ export async function getSEOContent(): Promise<SEOContent> {
     // 如果没有专门的 SEO 接口，可以从其他接口获取或使用默认值
     // 这里提供一个示例，你可以根据实际情况修改
     const defaultSEO: SEOContent = {
-      title: 'Tron 钱包生成器',
-      description: '安全、快速的 Tron 钱包生成工具，一键生成 Tron 钱包地址、私钥和公钥',
-      keywords: 'Tron,钱包,生成器,TRX,区块链',
-      ogTitle: 'Tron 钱包生成器',
-      ogDescription: '安全、快速的 Tron 钱包生成工具',
+      title: '工资流水模拟器',
+      description: '按工资、时间范围和发薪日生成工资流水数组，支持周末自动顺延到周一',
+      keywords: '工资流水,模拟器,USDT,TRX,交易数据',
+      ogTitle: '工资流水模拟器',
+      ogDescription: '快速生成工资流水数组，便于测试和演示',
       ogImage: '/images/tron-wallet.png',
       ogUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://your-domain.com',
       twitterCard: 'summary_large_image',
-      twitterTitle: 'Tron 钱包生成器',
-      twitterDescription: '安全、快速的 Tron 钱包生成工具',
+      twitterTitle: '工资流水模拟器',
+      twitterDescription: '快速生成工资流水数组，便于测试和演示',
       twitterImage: '/images/tron-wallet.png',
       buildId: process.env.NEXT_PUBLIC_BUILD_ID || Date.now().toString(),
     };
@@ -49,10 +49,9 @@ export async function getSEOContent(): Promise<SEOContent> {
     console.error('获取 SEO 内容失败:', error);
     // 返回默认值，确保即使 API 失败也能正常工作
     return {
-      title: 'Tron 钱包生成器',
-      description: '安全、快速的 Tron 钱包生成工具',
+      title: '工资流水模拟器',
+      description: '按工资、时间范围和发薪日生成工资流水数组',
       buildId: Date.now().toString(),
     };
   }
 }
-
