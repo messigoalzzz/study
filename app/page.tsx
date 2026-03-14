@@ -316,7 +316,7 @@ const Page = () => {
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 md:p-8">
           <div className="">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-              工资流水模拟器
+              工资流水模拟器New
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               输入工资、时间范围、发薪日，按月生成可直接粘贴到数组中的对象片段（周末自动顺延到周一）
