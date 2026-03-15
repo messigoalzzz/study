@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const GUILD_ID = process.env.DISCORD_GUILD_ID ?? "1482288954798772339";
+const GUILD_ID = process.env.DISCORD_GUILD_ID ?? "1343593402070990870";
 const ENABLE_INVITES = true;
 const ENABLE_DMS = true;
 
