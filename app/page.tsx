@@ -112,8 +112,6 @@ const Page = () => {
   const [simulatedTransactions, setSimulatedTransactions] = useState<SimulatedTransaction[]>([])
   const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle')
   const [copyStatusText, setCopyStatusText] = useState('')
-  const [raidProtectionLoading, setRaidProtectionLoading] = useState(false)
-  const [raidProtectionResult, setRaidProtectionResult] = useState<{ ok: boolean; message: string } | null>(null)
 
   const writeTextToClipboard = async (text: string) => {
     if (navigator.clipboard?.writeText) {
@@ -269,50 +267,9 @@ const Page = () => {
 
   const transactionsCode = buildTransactionsCode(simulatedTransactions)
 
-  const runRaidProtection = async () => {
-    setRaidProtectionLoading(true)
-    setRaidProtectionResult(null)
-    try {
-      const res = await fetch('/api/raid-protection', { method: 'POST' })
-      const data = await res.json()
-      if (data.success) {
-        setRaidProtectionResult({ ok: true, message: data.message ?? '已设置 24 小时后自动恢复' })
-      } else {
-        setRaidProtectionResult({ ok: false, message: data.error ?? '执行失败' })
-      }
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : '请求失败'
-      setRaidProtectionResult({ ok: false, message: msg })
-    } finally {
-      setRaidProtectionLoading(false)
-    }
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
-        <div className="mb-4 flex justify-end">
-          <button
-            type="button"
-            onClick={runRaidProtection}
-            disabled={raidProtectionLoading}
-            className="rounded-lg border border-amber-500 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 shadow-sm transition-colors hover:bg-amber-100 disabled:opacity-50 dark:border-amber-600 dark:bg-amber-900/30 dark:text-amber-200 dark:hover:bg-amber-900/50"
-          >
-            {raidProtectionLoading ? '执行中...' : '执行 Discord 24h 保护脚本'}
-          </button>
-        </div>
-        {raidProtectionResult && (
-          <div
-            className={`mb-4 rounded-lg border px-4 py-3 text-sm ${
-              raidProtectionResult.ok
-                ? 'border-emerald-500 bg-emerald-50 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200'
-                : 'border-red-500 bg-red-50 text-red-800 dark:bg-red-900/30 dark:text-red-200'
-            }`}
-          >
-            {raidProtectionResult.ok ? '✓ ' : '✗ '}
-            {raidProtectionResult.message}
-          </div>
-        )}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 md:p-8">
           <div className="">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
