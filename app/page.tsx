@@ -33,6 +33,15 @@ const generateHex = (length: number) => {
   return output
 }
 
+const parseIntegerInput = (value: string) => {
+  if (!value.trim()) {
+    return Number.NaN
+  }
+
+  const parsed = Number(value)
+  return Number.isInteger(parsed) ? parsed : Number.NaN
+}
+
 const formatDateTime = (date: Date) => {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
 }
@@ -72,6 +81,65 @@ const adjustWeekendToMonday = (date: Date) => {
   }
 }
 
+const createPayrollDate = (year: number, monthIndex: number, payDay: number, withRandomTime = false) => {
+  const maxDay = getDaysInMonth(year, monthIndex)
+  const safeDay = Math.min(payDay, maxDay)
+  const payrollDate = new Date(
+    year,
+    monthIndex,
+    safeDay,
+    withRandomTime ? randomInt(9, 18) : 12,
+    withRandomTime ? randomInt(0, 59) : 0,
+    withRandomTime ? randomInt(0, 59) : 0,
+    0
+  )
+
+  adjustWeekendToMonday(payrollDate)
+  return payrollDate
+}
+
+const rangeIncludesFebruaryPayroll = (rangeStart: Date, rangeEnd: Date, payDay: number) => {
+  const startBoundary = new Date(
+    rangeStart.getFullYear(),
+    rangeStart.getMonth(),
+    rangeStart.getDate(),
+    0,
+    0,
+    0,
+    0
+  )
+  const endBoundary = new Date(
+    rangeEnd.getFullYear(),
+    rangeEnd.getMonth(),
+    rangeEnd.getDate(),
+    23,
+    59,
+    59,
+    999
+  )
+
+  let cursor = new Date(rangeStart.getFullYear(), rangeStart.getMonth(), 1)
+  const monthLimit = 240
+  let monthSteps = 0
+
+  while (cursor.getTime() <= endBoundary.getTime() && monthSteps < monthLimit) {
+    const year = cursor.getFullYear()
+    const monthIndex = cursor.getMonth()
+
+    if (monthIndex === 1) {
+      const payrollDate = createPayrollDate(year, monthIndex, payDay)
+      if (payrollDate.getTime() >= startBoundary.getTime() && payrollDate.getTime() <= endBoundary.getTime()) {
+        return true
+      }
+    }
+
+    cursor = new Date(year, monthIndex + 1, 1)
+    monthSteps += 1
+  }
+
+  return false
+}
+
 const formatAmount = (value: number) => {
   const fixed = value.toFixed(4)
   const trimmed = fixed.replace(/0+$/, '')
@@ -107,11 +175,26 @@ const Page = () => {
   const [startDate, setStartDate] = useState(formatDateInput(defaultStart))
   const [endDate, setEndDate] = useState(formatDateInput(defaultEnd))
   const [payday, setPayday] = useState('15')
+  const [annualBonusMonths, setAnnualBonusMonths] = useState('0')
   const [generatingTransactions, setGeneratingTransactions] = useState(false)
   const [transactionError, setTransactionError] = useState<string | null>(null)
   const [simulatedTransactions, setSimulatedTransactions] = useState<SimulatedTransaction[]>([])
   const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle')
   const [copyStatusText, setCopyStatusText] = useState('')
+
+  const parsedStartDate = parseDateInput(startDate)
+  const parsedEndDate = parseDateInput(endDate)
+  const parsedPayDay = parseIntegerInput(payday)
+  const canEvaluateAnnualBonusRange =
+    parsedStartDate !== null &&
+    parsedEndDate !== null &&
+    parsedStartDate.getTime() <= parsedEndDate.getTime() &&
+    !Number.isNaN(parsedPayDay) &&
+    parsedPayDay >= 1 &&
+    parsedPayDay <= 31
+  const shouldShowAnnualBonusField = canEvaluateAnnualBonusRange
+    ? rangeIncludesFebruaryPayroll(parsedStartDate, parsedEndDate, parsedPayDay)
+    : false
 
   const writeTextToClipboard = async (text: string) => {
     if (navigator.clipboard?.writeText) {
@@ -152,9 +235,12 @@ const Page = () => {
 
   const generateSalaryTransactions = async () => {
     const baseSalary = Number.parseFloat(salary)
-    const payDay = Number.parseInt(payday, 10)
+    const payDay = parseIntegerInput(payday)
     const rangeStart = parseDateInput(startDate)
     const rangeEnd = parseDateInput(endDate)
+    const annualBonusMonthCount = shouldShowAnnualBonusField
+      ? parseIntegerInput(annualBonusMonths)
+      : 0
 
     if (Number.isNaN(baseSalary) || baseSalary <= 0) {
       setTransactionError('工资金额必须大于 0')
@@ -173,6 +259,14 @@ const Page = () => {
 
     if (Number.isNaN(payDay) || payDay < 1 || payDay > 31) {
       setTransactionError('发薪日请输入 1 到 31 之间的整数')
+      return
+    }
+
+    if (
+      shouldShowAnnualBonusField &&
+      (Number.isNaN(annualBonusMonthCount) || annualBonusMonthCount < 0)
+    ) {
+      setTransactionError('年终奖月数请输入大于等于 0 的整数')
       return
     }
 
@@ -201,23 +295,20 @@ const Page = () => {
       while (cursor.getTime() <= endBoundary.getTime() && monthSteps < monthLimit) {
         const year = cursor.getFullYear()
         const monthIndex = cursor.getMonth()
-        const maxDay = getDaysInMonth(year, monthIndex)
-        const safeDay = Math.min(payDay, maxDay)
-        const txDate = new Date(
-          year,
-          monthIndex,
-          safeDay,
-          randomInt(9, 18),
-          randomInt(0, 59),
-          randomInt(0, 59),
-          0
-        )
-
-        adjustWeekendToMonday(txDate)
+        const txDate = createPayrollDate(year, monthIndex, payDay, true)
 
         if (txDate.getTime() >= startBoundary.getTime() && txDate.getTime() <= endBoundary.getTime()) {
-          const salaryOffset = randomBetween(-3, 3)
-          const txAmount = baseSalary + salaryOffset
+          const isFebruaryPayroll = monthIndex === 1
+          const salaryBase =
+            isFebruaryPayroll && annualBonusMonthCount > 0
+              ? baseSalary * (annualBonusMonthCount + 1)
+              : baseSalary
+          const salaryOffset =
+            isFebruaryPayroll && annualBonusMonthCount > 0
+              ? randomBetween(-2, 2)
+              : randomBetween(-3, 3)
+          const txAmount =
+            salaryBase + salaryOffset
 
           generated.push({
             coin: 'USDT',
@@ -276,7 +367,7 @@ const Page = () => {
               工资流水模拟器
             </h2>
             <p className="text-gray-600 dark:text-gray-400 mb-6">
-              输入工资、时间范围、发薪日，按月生成可直接粘贴到数组中的对象片段（周末自动顺延到周一）
+              输入工资、时间范围、发薪日，按月生成可直接粘贴到数组中的对象片段（周末自动顺延到周一，范围包含 2 月发薪时可额外叠加年终奖）
             </p>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -296,7 +387,7 @@ const Page = () => {
               </div>
             </div>
 
-            <div className="grid gap-4 mt-4 md:grid-cols-3">
+            <div className={`grid gap-4 mt-4 ${shouldShowAnnualBonusField ? 'md:grid-cols-4' : 'md:grid-cols-3'}`}>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                   开始时间
@@ -336,7 +427,32 @@ const Page = () => {
                   placeholder="例如 15"
                 />
               </div>
+
+              {shouldShowAnnualBonusField && (
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    年终奖（月）
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    value={annualBonusMonths}
+                    onChange={(event) => setAnnualBonusMonths(event.target.value)}
+                    className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    placeholder="例如 2"
+                  />
+                </div>
+              )}
             </div>
+
+            {canEvaluateAnnualBonusRange && (
+              <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                {shouldShowAnnualBonusField
+                  ? '当前时间范围包含 2 月发薪记录，已显示年终奖（月）字段，2 月工资会按月工资叠加年终奖月数生成。'
+                  : '当前时间范围不包含 2 月发薪记录，已隐藏年终奖（月）字段。'}
+              </p>
+            )}
 
             <div className="mt-8 flex justify-center">
               <button
