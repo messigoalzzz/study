@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 interface SimulatedTransaction {
   coin: 'USDT'
@@ -11,9 +11,24 @@ interface SimulatedTransaction {
   address: string
 }
 
+interface SalaryHistoryRecord {
+  id: string
+  generatedAt: string
+  generatedAtTimestamp: number
+  salary: string
+  startDate: string
+  endDate: string
+  payday: string
+  annualBonusMonths: string
+  transactions: SimulatedTransaction[]
+}
+
 type CopyStatus = 'idle' | 'success' | 'failed'
 
 const HEX_ALPHABET = '0123456789abcdef'
+const HISTORY_STORAGE_KEY = 'salary-generation-history'
+const HISTORY_DISPLAY_LIMIT = 5
+const HISTORY_STORAGE_LIMIT = 10
 
 const pad = (value: number) => String(value).padStart(2, '0')
 
@@ -165,6 +180,92 @@ const buildTransactionsCode = (transactions: SimulatedTransaction[]) => {
   return rows.join('\n')
 }
 
+const getDateTimeValue = (dateText: string) => {
+  const timestamp = new Date(dateText.replace(' ', 'T')).getTime()
+  return Number.isNaN(timestamp) ? 0 : timestamp
+}
+
+const sortTransactionsByDateDesc = (transactions: SimulatedTransaction[]) => {
+  return [...transactions].sort((a, b) => getDateTimeValue(b.date) - getDateTimeValue(a.date))
+}
+
+const getRecentSalaryHistory = (records: SalaryHistoryRecord[]) => {
+  return [...records]
+    .sort((a, b) => b.generatedAtTimestamp - a.generatedAtTimestamp)
+    .slice(0, HISTORY_STORAGE_LIMIT)
+}
+
+const isSimulatedTransaction = (value: unknown): value is SimulatedTransaction => {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const item = value as Record<string, unknown>
+  return (
+    item.coin === 'USDT' &&
+    typeof item.amount === 'string' &&
+    item.network === 'TRX' &&
+    typeof item.date === 'string' &&
+    typeof item.id === 'string' &&
+    typeof item.address === 'string'
+  )
+}
+
+const isSalaryHistoryRecord = (value: unknown): value is SalaryHistoryRecord => {
+  if (!value || typeof value !== 'object') {
+    return false
+  }
+
+  const item = value as Record<string, unknown>
+  return (
+    typeof item.id === 'string' &&
+    typeof item.generatedAt === 'string' &&
+    typeof item.generatedAtTimestamp === 'number' &&
+    typeof item.salary === 'string' &&
+    typeof item.startDate === 'string' &&
+    typeof item.endDate === 'string' &&
+    typeof item.payday === 'string' &&
+    typeof item.annualBonusMonths === 'string' &&
+    Array.isArray(item.transactions) &&
+    item.transactions.every(isSimulatedTransaction)
+  )
+}
+
+const readSalaryHistory = () => {
+  if (typeof window === 'undefined') {
+    return []
+  }
+
+  try {
+    const rawHistory = window.localStorage.getItem(HISTORY_STORAGE_KEY)
+    if (!rawHistory) {
+      return []
+    }
+
+    const parsedHistory = JSON.parse(rawHistory)
+    if (!Array.isArray(parsedHistory)) {
+      return []
+    }
+
+    return getRecentSalaryHistory(parsedHistory.filter(isSalaryHistoryRecord))
+  } catch (error) {
+    console.error('Failed to read salary history:', error)
+    return []
+  }
+}
+
+const saveSalaryHistory = (records: SalaryHistoryRecord[]) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  try {
+    window.localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(records))
+  } catch (error) {
+    console.error('Failed to save salary history:', error)
+  }
+}
+
 const Page = () => {
   const now = new Date()
   const defaultStart = new Date(now.getFullYear(), now.getMonth() - 3, 1)
@@ -179,8 +280,15 @@ const Page = () => {
   const [generatingTransactions, setGeneratingTransactions] = useState(false)
   const [transactionError, setTransactionError] = useState<string | null>(null)
   const [simulatedTransactions, setSimulatedTransactions] = useState<SimulatedTransaction[]>([])
+  const [salaryHistory, setSalaryHistory] = useState<SalaryHistoryRecord[]>([])
+  const [selectedHistoryRecordId, setSelectedHistoryRecordId] = useState<string | null>(null)
+  const [historyModalOpen, setHistoryModalOpen] = useState(false)
   const [copyStatus, setCopyStatus] = useState<CopyStatus>('idle')
   const [copyStatusText, setCopyStatusText] = useState('')
+
+  useEffect(() => {
+    setSalaryHistory(readSalaryHistory())
+  }, [])
 
   const parsedStartDate = parseDateInput(startDate)
   const parsedEndDate = parseDateInput(endDate)
@@ -231,6 +339,41 @@ const Page = () => {
       }
       return false
     }
+  }
+
+  const addSalaryHistoryRecord = (
+    transactions: SimulatedTransaction[],
+    annualBonusMonthCount: number
+  ) => {
+    const generatedAt = new Date()
+    const generatedAtTimestamp = generatedAt.getTime()
+    const historyRecord: SalaryHistoryRecord = {
+      id: `${generatedAtTimestamp}-${generateHex(8)}`,
+      generatedAt: formatDateTime(generatedAt),
+      generatedAtTimestamp,
+      salary: salary.trim(),
+      startDate,
+      endDate,
+      payday,
+      annualBonusMonths: shouldShowAnnualBonusField ? String(annualBonusMonthCount) : '0',
+      transactions,
+    }
+
+    setSelectedHistoryRecordId(historyRecord.id)
+    setSalaryHistory((currentHistory) => {
+      const nextHistory = getRecentSalaryHistory([historyRecord, ...currentHistory])
+      saveSalaryHistory(nextHistory)
+      return nextHistory
+    })
+  }
+
+  const showHistoryRecord = (record: SalaryHistoryRecord) => {
+    setSimulatedTransactions(record.transactions)
+    setSelectedHistoryRecordId(record.id)
+    setCopyStatus('idle')
+    setCopyStatusText('')
+    setCopied(null)
+    setHistoryModalOpen(false)
   }
 
   const generateSalaryTransactions = async () => {
@@ -327,13 +470,15 @@ const Page = () => {
       if (!generated.length) {
         setTransactionError('该时间范围内没有可用发薪日，请调整时间范围')
         setSimulatedTransactions([])
+        setSelectedHistoryRecordId(null)
         return
       }
 
-      const nextTransactions = [...generated].reverse()
+      const nextTransactions = sortTransactionsByDateDesc(generated)
       const generatedCode = buildTransactionsCode(nextTransactions)
 
       setSimulatedTransactions(nextTransactions)
+      addSalaryHistoryRecord(nextTransactions, annualBonusMonthCount)
       setTransactionError(null)
       setCopied(null)
 
@@ -349,6 +494,7 @@ const Page = () => {
       const message = error instanceof Error ? error.message : '生成工资流水失败'
       setTransactionError(message)
       setSimulatedTransactions([])
+      setSelectedHistoryRecordId(null)
       setCopyStatus('idle')
       setCopyStatusText('')
     } finally {
@@ -357,6 +503,66 @@ const Page = () => {
   }
 
   const transactionsCode = buildTransactionsCode(simulatedTransactions)
+  const visibleSalaryHistory = salaryHistory.slice(0, HISTORY_DISPLAY_LIMIT)
+  const hasMoreSalaryHistory = salaryHistory.length > HISTORY_DISPLAY_LIMIT
+  const selectedHistoryIndex = selectedHistoryRecordId
+    ? salaryHistory.findIndex((record) => record.id === selectedHistoryRecordId)
+    : -1
+  const selectedResultNumber = selectedHistoryIndex >= 0 ? selectedHistoryIndex + 1 : 1
+  const renderSalaryHistoryRecord = (record: SalaryHistoryRecord, index: number) => {
+    const bonusMonthCount = Number.parseInt(record.annualBonusMonths, 10)
+    const isSelected = record.id === selectedHistoryRecordId
+
+    return (
+      <article
+        key={record.id}
+        role="button"
+        tabIndex={0}
+        onClick={() => showHistoryRecord(record)}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault()
+            showHistoryRecord(record)
+          }
+        }}
+        className={
+          isSelected
+            ? 'group cursor-pointer rounded-lg bg-gradient-to-r from-fuchsia-500 via-blue-500 to-emerald-500 p-[2px] shadow-lg shadow-blue-500/20 outline-none transition-transform focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-900'
+            : 'group cursor-pointer rounded-lg border border-gray-200 bg-white outline-none transition-all hover:border-blue-300 hover:shadow-md focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:border-gray-700 dark:bg-gray-800 dark:hover:border-blue-500 dark:focus-visible:ring-offset-gray-900'
+        }
+      >
+        <div className={isSelected ? 'rounded-[6px] bg-white p-4 dark:bg-gray-800' : 'p-4'}>
+          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="font-semibold text-gray-900 dark:text-white">
+                  #{index + 1}
+                </p>
+                <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-800 ring-1 ring-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-200 dark:ring-yellow-700/60">
+                  {record.generatedAt}
+                </span>
+                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                  共 {record.transactions.length} 条流水
+                </span>
+                {isSelected && (
+                  <span className="rounded-full bg-gradient-to-r from-fuchsia-500 via-blue-500 to-emerald-500 px-2 py-0.5 text-xs font-extrabold text-white shadow-sm">
+                    当前结果
+                  </span>
+                )}
+              </div>
+              <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                {record.startDate} 至 {record.endDate}，发薪日 {record.payday} 日，月工资 {record.salary} USDT
+                {bonusMonthCount > 0 ? `，年终奖 ${bonusMonthCount} 个月` : ''}
+              </p>
+            </div>
+            <span className="shrink-0 rounded-md px-3 py-1.5 text-sm font-semibold text-blue-600 transition-colors group-hover:bg-blue-50 group-hover:text-blue-700 dark:text-blue-400 dark:group-hover:bg-blue-900/20 dark:group-hover:text-blue-300">
+              查看结果
+            </span>
+          </div>
+        </div>
+      </article>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-8">
@@ -473,6 +679,69 @@ const Page = () => {
               </p>
             )}
 
+            {salaryHistory.length > 0 && (
+              <section className="mt-6 border-t border-gray-200 pt-5 dark:border-gray-700">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                      历史记录
+                    </h3>
+                    <p className="mt-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                      页面展示最近 {visibleSalaryHistory.length} 次，最多保留最近 {HISTORY_STORAGE_LIMIT} 次生成
+                    </p>
+                  </div>
+                  {hasMoreSalaryHistory && (
+                    <button
+                      onClick={() => setHistoryModalOpen(true)}
+                      className="shrink-0 rounded-md px-3 py-1.5 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                    >
+                      More
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-3">
+                  {visibleSalaryHistory.map((record, index) => renderSalaryHistoryRecord(record, index))}
+                </div>
+              </section>
+            )}
+
+            {historyModalOpen && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="history-modal-title"
+                onClick={() => setHistoryModalOpen(false)}
+              >
+                <div
+                  className="max-h-[85vh] w-full max-w-3xl overflow-hidden rounded-lg bg-white shadow-2xl dark:bg-gray-800"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="flex items-start justify-between gap-4 border-b border-gray-200 p-4 dark:border-gray-700">
+                    <div>
+                      <h3 id="history-modal-title" className="text-lg font-bold text-gray-900 dark:text-white">
+                        更多历史记录
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        展开显示已保留的最近 {salaryHistory.length} 次生成
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setHistoryModalOpen(false)}
+                      className="shrink-0 rounded-md px-3 py-1.5 text-sm font-semibold text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
+                    >
+                      关闭
+                    </button>
+                  </div>
+
+                  <div className="max-h-[calc(85vh-88px)] space-y-3 overflow-y-auto p-4">
+                    {salaryHistory.map((record, index) => renderSalaryHistoryRecord(record, index))}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {simulatedTransactions.length > 0 && (
               <div className="mt-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
                 {copyStatus !== 'idle' && (
@@ -525,8 +794,13 @@ const Page = () => {
                   </div>
                 )}
                 <div className="flex items-center justify-between mb-3">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                    生成结果（共 {simulatedTransactions.length} 条，可直接粘贴到数组中）
+                  <label className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+                    <span className="rounded-md bg-gradient-to-r from-fuchsia-500 via-blue-500 to-emerald-500 px-2 py-0.5 text-xs font-extrabold text-white shadow-sm">
+                      #{selectedResultNumber}
+                    </span>
+                    <span className="bg-gradient-to-r from-fuchsia-600 via-blue-600 to-emerald-600 bg-clip-text text-transparent dark:from-fuchsia-300 dark:via-sky-300 dark:to-emerald-300">
+                      生成结果（共 {simulatedTransactions.length} 条，可直接粘贴到数组中）
+                    </span>
                   </label>
                   <button
                     onClick={async () => {
