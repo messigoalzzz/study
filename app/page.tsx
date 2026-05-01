@@ -566,9 +566,9 @@ const Page = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="mx-auto max-w-7xl">
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 md:p-8">
-          <div className="">
+          <div>
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               工资流水模拟器
             </h2>
@@ -679,31 +679,124 @@ const Page = () => {
               </p>
             )}
 
-            {salaryHistory.length > 0 && (
-              <section className="mt-6 border-t border-gray-200 pt-5 dark:border-gray-700">
-                <div className="mb-3 flex items-center justify-between gap-3">
-                  <div>
-                    <h3 className="text-base font-bold text-gray-900 dark:text-white">
-                      历史记录
-                    </h3>
-                    <p className="mt-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
-                      页面展示最近 {visibleSalaryHistory.length} 次，最多保留最近 {HISTORY_STORAGE_LIMIT} 次生成
-                    </p>
+            {(simulatedTransactions.length > 0 || salaryHistory.length > 0) && (
+              <div className="mt-6 flex flex-col gap-6 border-t border-gray-200 pt-6 dark:border-gray-700 lg:flex-row lg:items-start">
+                {simulatedTransactions.length > 0 && (
+                  <div className={`min-w-0 ${salaryHistory.length > 0 ? 'lg:flex-[3]' : 'w-full'}`}>
+                    <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
+                      {copyStatus !== 'idle' && (
+                        <div
+                          className={`mb-4 rounded-xl border-2 p-4 shadow-sm ${
+                            copyStatus === 'success'
+                              ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30'
+                              : 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-extrabold ${
+                                copyStatus === 'success'
+                                  ? 'bg-emerald-600 text-white'
+                                  : 'bg-amber-500 text-white'
+                              }`}
+                            >
+                              {copyStatus === 'success' ? 'OK' : '!'}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p
+                                className={`text-base font-extrabold ${
+                                  copyStatus === 'success'
+                                    ? 'text-emerald-800 dark:text-emerald-200'
+                                    : 'text-amber-800 dark:text-amber-200'
+                                }`}
+                              >
+                                {copyStatus === 'success' ? '已复制到剪贴板' : '自动复制失败'}
+                              </p>
+                              <p
+                                className={`text-sm font-semibold ${
+                                  copyStatus === 'success'
+                                    ? 'text-emerald-700 dark:text-emerald-300'
+                                    : 'text-amber-700 dark:text-amber-300'
+                                }`}
+                              >
+                                {copyStatusText}
+                              </p>
+                            </div>
+                            {copyStatus === 'success' && (
+                              <div className="ml-2 hidden h-10 items-end gap-1 sm:flex">
+                                <span className="h-3 w-1.5 rounded-sm bg-emerald-500/80" />
+                                <span className="h-5 w-1.5 rounded-sm bg-emerald-500" />
+                                <span className="h-8 w-1.5 rounded-sm bg-emerald-500/90" />
+                                <span className="h-6 w-1.5 rounded-sm bg-emerald-500/80" />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      <div className="mb-3 flex items-center justify-between">
+                        <label className="flex flex-wrap items-center gap-2 text-sm font-semibold">
+                          <span className="rounded-md bg-gradient-to-r from-fuchsia-500 via-blue-500 to-emerald-500 px-2 py-0.5 text-xs font-extrabold text-white shadow-sm">
+                            #{selectedResultNumber}
+                          </span>
+                          <span className="bg-gradient-to-r from-fuchsia-600 via-blue-600 to-emerald-600 bg-clip-text text-transparent dark:from-fuchsia-300 dark:via-sky-300 dark:to-emerald-300">
+                            生成结果（共 {simulatedTransactions.length} 条）
+                          </span>
+                        </label>
+                        <button
+                          onClick={async () => {
+                            const isCopied = await copyToClipboard(transactionsCode, 'transactions')
+                            if (isCopied) {
+                              setCopyStatus('success')
+                              setCopyStatusText('已手动复制成功，可直接粘贴')
+                            } else {
+                              setCopyStatus('failed')
+                              setCopyStatusText('复制失败，请检查浏览器剪贴板权限')
+                            }
+                          }}
+                          className={`shrink-0 rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
+                            copied === 'transactions'
+                              ? 'bg-emerald-600 text-white shadow-md'
+                              : 'text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-300'
+                          }`}
+                        >
+                          {copied === 'transactions' ? '已复制到剪贴板' : '复制片段'}
+                        </button>
+                      </div>
+                      <pre className="max-h-[60vh] overflow-y-auto text-xs text-gray-900 dark:text-white font-mono whitespace-pre-wrap break-all">
+                        {transactionsCode}
+                      </pre>
+                    </div>
                   </div>
-                  {hasMoreSalaryHistory && (
-                    <button
-                      onClick={() => setHistoryModalOpen(true)}
-                      className="shrink-0 rounded-md px-3 py-1.5 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
-                    >
-                      More
-                    </button>
-                  )}
-                </div>
+                )}
 
-                <div className="space-y-3">
-                  {visibleSalaryHistory.map((record, index) => renderSalaryHistoryRecord(record, index))}
-                </div>
-              </section>
+                {salaryHistory.length > 0 && (
+                  <div className={`min-w-0 ${simulatedTransactions.length > 0 ? 'lg:flex-[2]' : 'w-full'}`}>
+                    <section>
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div>
+                          <h3 className="text-base font-bold text-gray-900 dark:text-white">
+                            历史记录
+                          </h3>
+                          <p className="mt-1 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                            展示最近 {visibleSalaryHistory.length} 次，保留 {HISTORY_STORAGE_LIMIT} 次
+                          </p>
+                        </div>
+                        {hasMoreSalaryHistory && (
+                          <button
+                            onClick={() => setHistoryModalOpen(true)}
+                            className="shrink-0 rounded-md px-3 py-1.5 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-300"
+                          >
+                            More
+                          </button>
+                        )}
+                      </div>
+                      <div className="space-y-3">
+                        {visibleSalaryHistory.map((record, index) => renderSalaryHistoryRecord(record, index))}
+                      </div>
+                    </section>
+                  </div>
+                )}
+              </div>
             )}
 
             {historyModalOpen && (
@@ -734,101 +827,13 @@ const Page = () => {
                       关闭
                     </button>
                   </div>
-
                   <div className="max-h-[calc(85vh-88px)] space-y-3 overflow-y-auto p-4">
                     {salaryHistory.map((record, index) => renderSalaryHistoryRecord(record, index))}
                   </div>
                 </div>
               </div>
             )}
-
-            {simulatedTransactions.length > 0 && (
-              <div className="mt-6 bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                {copyStatus !== 'idle' && (
-                  <div
-                    className={`mb-4 rounded-xl border-2 p-4 shadow-sm ${
-                      copyStatus === 'success'
-                        ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/30'
-                        : 'border-amber-500 bg-amber-50 dark:bg-amber-900/20'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={`mt-0.5 flex h-8 w-8 items-center justify-center rounded-full text-sm font-extrabold ${
-                          copyStatus === 'success'
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-amber-500 text-white'
-                        }`}
-                      >
-                        {copyStatus === 'success' ? 'OK' : '!'}
-                      </div>
-                      <div className="flex-1">
-                        <p
-                          className={`text-base font-extrabold ${
-                            copyStatus === 'success'
-                              ? 'text-emerald-800 dark:text-emerald-200'
-                              : 'text-amber-800 dark:text-amber-200'
-                          }`}
-                        >
-                          {copyStatus === 'success' ? '已复制到剪贴板' : '自动复制失败'}
-                        </p>
-                        <p
-                          className={`text-sm font-semibold ${
-                            copyStatus === 'success'
-                              ? 'text-emerald-700 dark:text-emerald-300'
-                              : 'text-amber-700 dark:text-amber-300'
-                          }`}
-                        >
-                          {copyStatusText}
-                        </p>
-                      </div>
-                      {copyStatus === 'success' && (
-                        <div className="ml-2 hidden h-10 items-end gap-1 sm:flex">
-                          <span className="h-3 w-1.5 rounded-sm bg-emerald-500/80" />
-                          <span className="h-5 w-1.5 rounded-sm bg-emerald-500" />
-                          <span className="h-8 w-1.5 rounded-sm bg-emerald-500/90" />
-                          <span className="h-6 w-1.5 rounded-sm bg-emerald-500/80" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-                <div className="flex items-center justify-between mb-3">
-                  <label className="flex flex-wrap items-center gap-2 text-sm font-semibold">
-                    <span className="rounded-md bg-gradient-to-r from-fuchsia-500 via-blue-500 to-emerald-500 px-2 py-0.5 text-xs font-extrabold text-white shadow-sm">
-                      #{selectedResultNumber}
-                    </span>
-                    <span className="bg-gradient-to-r from-fuchsia-600 via-blue-600 to-emerald-600 bg-clip-text text-transparent dark:from-fuchsia-300 dark:via-sky-300 dark:to-emerald-300">
-                      生成结果（共 {simulatedTransactions.length} 条，可直接粘贴到数组中）
-                    </span>
-                  </label>
-                  <button
-                    onClick={async () => {
-                      const isCopied = await copyToClipboard(transactionsCode, 'transactions')
-                      if (isCopied) {
-                        setCopyStatus('success')
-                        setCopyStatusText('已手动复制成功，可直接粘贴')
-                      } else {
-                        setCopyStatus('failed')
-                        setCopyStatusText('复制失败，请检查浏览器剪贴板权限')
-                      }
-                    }}
-                    className={`rounded-md px-3 py-1 text-sm font-semibold transition-colors ${
-                      copied === 'transactions'
-                        ? 'bg-emerald-600 text-white shadow-md'
-                        : 'text-blue-600 hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-300'
-                    }`}
-                  >
-                    {copied === 'transactions' ? '已复制到剪贴板' : '复制片段'}
-                  </button>
-                </div>
-                <pre className="text-xs text-gray-900 dark:text-white font-mono whitespace-pre-wrap break-all">
-                  {transactionsCode}
-                </pre>
-              </div>
-            )}
           </div>
-
         </div>
       </div>
     </div>
