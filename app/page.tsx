@@ -682,7 +682,7 @@ const Page = () => {
             {(simulatedTransactions.length > 0 || salaryHistory.length > 0) && (
               <div className="mt-6 flex flex-col gap-6 border-t border-gray-200 pt-6 dark:border-gray-700 lg:flex-row lg:items-start">
                 {simulatedTransactions.length > 0 && (
-                  <div className={`min-w-0 ${salaryHistory.length > 0 ? 'lg:flex-[3]' : 'w-full'}`}>
+                  <div className={`min-w-0 ${salaryHistory.length > 0 ? 'lg:flex-1' : 'w-full'}`}>
                     <div className="rounded-lg bg-gray-50 p-4 dark:bg-gray-700">
                       {copyStatus !== 'idle' && (
                         <div
@@ -770,7 +770,7 @@ const Page = () => {
                 )}
 
                 {salaryHistory.length > 0 && (
-                  <div className={`min-w-0 ${simulatedTransactions.length > 0 ? 'lg:flex-[2]' : 'w-full'}`}>
+                  <div className={`min-w-0 ${simulatedTransactions.length > 0 ? 'lg:flex-[1]' : 'w-full'}`}>
                     <section>
                       <div className="mb-3 flex items-center justify-between gap-3">
                         <div>
