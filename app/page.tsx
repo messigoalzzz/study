@@ -26,9 +26,9 @@ interface SalaryHistoryRecord {
 type CopyStatus = 'idle' | 'success' | 'failed'
 
 const HEX_ALPHABET = '0123456789abcdef'
-const HISTORY_STORAGE_KEY = 'salary-generation-history'
 const HISTORY_DISPLAY_LIMIT = 5
-const HISTORY_STORAGE_LIMIT = 10
+const HISTORY_STORAGE_LIMIT = 100
+const HISTORY_API_PATH = '/api/salary-history'
 
 const pad = (value: number) => String(value).padStart(2, '0')
 
@@ -231,36 +231,30 @@ const isSalaryHistoryRecord = (value: unknown): value is SalaryHistoryRecord => 
   )
 }
 
-const readSalaryHistory = () => {
-  if (typeof window === 'undefined') {
-    return []
-  }
-
+const readSalaryHistory = async () => {
   try {
-    const rawHistory = window.localStorage.getItem(HISTORY_STORAGE_KEY)
-    if (!rawHistory) {
+    const response = await fetch(HISTORY_API_PATH, { cache: 'no-store' })
+    const result = await response.json()
+    if (!response.ok || !result.success || !Array.isArray(result.data)) {
       return []
     }
-
-    const parsedHistory = JSON.parse(rawHistory)
-    if (!Array.isArray(parsedHistory)) {
-      return []
-    }
-
-    return getRecentSalaryHistory(parsedHistory.filter(isSalaryHistoryRecord))
+    return getRecentSalaryHistory(result.data.filter(isSalaryHistoryRecord))
   } catch (error) {
     console.error('Failed to read salary history:', error)
     return []
   }
 }
 
-const saveSalaryHistory = (records: SalaryHistoryRecord[]) => {
-  if (typeof window === 'undefined') {
-    return
-  }
-
+const saveSalaryHistory = async (record: SalaryHistoryRecord) => {
   try {
-    window.localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(records))
+    const response = await fetch(HISTORY_API_PATH, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(record),
+    })
+    if (!response.ok) {
+      console.error('Failed to save salary history: HTTP', response.status)
+    }
   } catch (error) {
     console.error('Failed to save salary history:', error)
   }
@@ -287,7 +281,15 @@ const Page = () => {
   const [copyStatusText, setCopyStatusText] = useState('')
 
   useEffect(() => {
-    setSalaryHistory(readSalaryHistory())
+    let cancelled = false
+    readSalaryHistory().then((records) => {
+      if (!cancelled) {
+        setSalaryHistory(records)
+      }
+    })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const parsedStartDate = parseDateInput(startDate)
@@ -360,11 +362,10 @@ const Page = () => {
     }
 
     setSelectedHistoryRecordId(historyRecord.id)
-    setSalaryHistory((currentHistory) => {
-      const nextHistory = getRecentSalaryHistory([historyRecord, ...currentHistory])
-      saveSalaryHistory(nextHistory)
-      return nextHistory
-    })
+    setSalaryHistory((currentHistory) =>
+      getRecentSalaryHistory([historyRecord, ...currentHistory])
+    )
+    saveSalaryHistory(historyRecord)
   }
 
   const showHistoryRecord = (record: SalaryHistoryRecord) => {
