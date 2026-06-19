@@ -238,7 +238,11 @@ const readSalaryHistory = async () => {
     if (!response.ok || !result.success || !Array.isArray(result.data)) {
       return []
     }
-    return getRecentSalaryHistory(result.data.filter(isSalaryHistoryRecord))
+    const records = result.data.filter(isSalaryHistoryRecord).map((record: SalaryHistoryRecord) => ({
+      ...record,
+      generatedAt: formatDateTime(new Date(record.generatedAtTimestamp)),
+    }))
+    return getRecentSalaryHistory(records)
   } catch (error) {
     console.error('Failed to read salary history:', error)
     return []
